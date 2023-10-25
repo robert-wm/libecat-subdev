@@ -1,3 +1,36 @@
+/**
+ * \file hw.h
+ *
+ * \author Robert Burger <robert@burger-system.de>
+ *
+ * \date 25 Oct 2023
+ *
+ * \brief ESC hardware header.
+ *
+ * ESC hardware header.
+ */
+
+/*
+ * This file is part of libesc.
+ *
+ * libesc is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ * 
+ * libesc is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libesc; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+
+#ifndef LIBESC_TYPES_H
+#define LIBESC_TYPES_H
+
 #include <libesc/types.h>
 
 typedef struct hw {
@@ -35,4 +68,6 @@ osal_size_t hw_write(esc_t *pesc, osal_off_t adr, osal_uint8_t *buf, osal_size_t
  * \retval  OK on success.
  */
 osal_uint32_t hw_open(esc_t *pesc, void *esc_base, osal_uint16_t pdi_type);
+
+#endif // LIBESC_TYPES_H
 
