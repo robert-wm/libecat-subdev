@@ -28,8 +28,8 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef LIBESC_TYPES_H
-#define LIBESC_TYPES_H
+#ifndef LIBESC_HW_H
+#define LIBESC_HW_H
 
 #include <libesc/types.h>
 
@@ -69,5 +69,5 @@ osal_size_t hw_write(esc_t *pesc, osal_off_t adr, osal_uint8_t *buf, osal_size_t
  */
 osal_uint32_t hw_open(esc_t *pesc, void *esc_base, osal_uint16_t pdi_type);
 
-#endif // LIBESC_TYPES_H
+#endif // LIBESC_HW_H
 

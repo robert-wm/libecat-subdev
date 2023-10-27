@@ -32,6 +32,8 @@
 #ifndef LIBESC_TYPES_H
 #define LIBESC_TYPES_H
 
+typedef uint8_t     esc_uint8_t;
+typedef uint16_t    esc_uint16_t;
 typedef uint16_t    osal_uint16_t;
 typedef uint8_t     osal_uint8_t;
 typedef uint32_t    osal_uint32_t;
@@ -44,15 +46,18 @@ typedef uint64_t    osal_size_t;
 typedef uint64_t    osal_off_t;
 
 typedef uint8_t     osal_bool_t;
+typedef uint8_t     esc_bool_t;
 
 typedef uint16_t ec_state_transition_t;
+
+typedef void        osal_void_t;
+typedef void        esc_void_t;
+
+#define OSAL_TRUE   1
+#define OSAL_FALSE  0
+
+#define ESC_TRUE   1
+#define ESC_FALSE  0
 #define ESC_OK      0
-        
-#define OP_2_OP         0x0808
-#define OP_2_SAFEOP     0x0804
-#define OP_2_PREOP      0x0802
-#define OP_2_INIT       0x0801
-#define INIT_2_INIT     0x0101
-#define INIT_2_PREOP    0x0102
 
 #endif
