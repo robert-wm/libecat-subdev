@@ -24,11 +24,12 @@ esc_void_t esc_coe_sdo_download_normal_ind(esc_t *pesc, esc_uint16_t address, es
 esc_void_t esc_coe_download_sdo_segment_ind(esc_t *pesc, esc_uint16_t address, esc_bool_t toggle, esc_bool_t more_follows, esc_size_t_size, esc_uint8_t *data);
 esc_void_t esc_coe_sdo_upload_expedited_ind(esc_t *pesc, esc_uint16_t address, esc_uint16_t index, esc_uint8_t sub_index);
 
+//! \brief Mailbox message header.
 typedef struct esc_mailbox_hdr {
-    esc_uint16_t        length;
-    esc_uint16_t        address;
-    esc_uint8_t         channel_priority;
-    esc_uint8_t         type_cnt;
+    esc_uint16_t        length;           //!< \brief Actual length of mailbox message without mailbox hdr.
+    esc_uint16_t        address;          //!< \brief Mailbox message address field.  
+    esc_uint8_t         channel_priority; //!< \brief Mailbox channel and pririoty.
+    esc_uint8_t         type_cnt;         //!< \brief Mailbox message type and count for answer assignment.
 } esc_mailbox_hdr_t;
 
 typedef struct esc_coe_hdr {
