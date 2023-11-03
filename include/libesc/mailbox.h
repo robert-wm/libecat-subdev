@@ -51,11 +51,12 @@
 #define ESC_MBXERR_INVALIDSIZE                      ((esc_uint16_t)0x08u)    //!< \brief The length of data is inconsistent 
 #define ESC_MBXERR_SERVICEINWORK                    ((esc_uint16_t)0x09u)    //!< \brief Mailbox service already in use
 
+//! \brief Mailbox message header.
 typedef struct esc_mailbox_hdr {
-    esc_uint16_t        length;
-    esc_uint16_t        address;
-    esc_uint8_t         channel_priority;
-    esc_uint8_t         type_cnt;
+    esc_uint16_t        length;           //!< \brief Actual length of mailbox message without mailbox hdr.
+    esc_uint16_t        address;          //!< \brief Mailbox message address field.  
+    esc_uint8_t         channel_priority; //!< \brief Mailbox channel and pririoty.
+    esc_uint8_t         type_cnt;         //!< \brief Mailbox message type and count for answer assignment.
 } esc_mailbox_hdr_t;
 
 typedef esc_mailbox_error_reply {
