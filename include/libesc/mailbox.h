@@ -31,7 +31,38 @@
 #ifndef LIBESC_MAILBOX_H
 #define LIBESC_MAILBOX_H
 
+#define ESC_MBX_TYPE__ERR                           ((esc_uint8_t)0x00u);
+#define ESC_MBX_TYPE__ADS                           ((esc_uint8_t)0x01u)    //!< \brief ADS over EtherCAT (AoE)
+#define ESC_MBX_TYPE__EOE                           ((esc_uint8_t)0x02u)    //!< \brief Ethernet over EtherCAT (EoE)
+#define ESC_MBX_TYPE__COE                           ((esc_uint8_t)0x03u)    //!< \brief CAN application protocol over EtherCAT (CoE)
+#define ESC_MBX_TYPE__FOE                           ((esc_uint8_t)0x04u)    //!< \brief File Access over EtherCAT (FoE)
+#define ESC_MBX_TYPE__SOE                           ((esc_uint8_t)0x05u)    //!< \brief Servo profile over EtherCAT (SoE)
+#define ESC_MBX_TYPE__VEN                           ((esc_uint8_t)0x0fu)    //!< \brief vendor specific
 
+#define ESC_MBX_ERROR_REPLY__TYPE__MAILBOX_COMMAND  ((esc_uint16_t)0x01u)
+
+#define ESC_MBXERR_SYNTAX                           ((esc_uint16_t)0x01u)    //!< \brief Syntax of 6 octet Mailbox Header is wrong
+#define ESC_MBXERR_UNSUPPORTEDPROTOCOL              ((esc_uint16_t)0x02u)    //!< \brief The Mailbox protocol is not supported
+#define ESC_MBXERR_INVALIDCHANNEL                   ((esc_uint16_t)0x03u)    //!< \brief Channel Field contains wrong value (a slave can ignore the channel field)
+#define ESC_MBXERR_SERVICENOTSUPPORTED              ((esc_uint16_t)0x04u)    //!< \brief The service in the Mailbox protocol is not supported
+#define ESC_MBXERR_INVALIDHEADER                    ((esc_uint16_t)0x05u)    //!< \brief The mailbox protocol header of the mailbox protocol is wrong (without the 6 octet mailbox header)
+#define ESC_MBXERR_SIZETOOSHORT                     ((esc_uint16_t)0x06u)    //!< \brief Length of received mailbox data is too short 
+#define ESC_MBXERR_NOMOREMEMORY                     ((esc_uint16_t)0x07u)    //!< \brief Mailbox protocol cannot be processed because of limited ressources
+#define ESC_MBXERR_INVALIDSIZE                      ((esc_uint16_t)0x08u)    //!< \brief The length of data is inconsistent 
+#define ESC_MBXERR_SERVICEINWORK                    ((esc_uint16_t)0x09u)    //!< \brief Mailbox service already in use
+
+typedef struct esc_mailbox_hdr {
+    esc_uint16_t        length;
+    esc_uint16_t        address;
+    esc_uint8_t         channel_priority;
+    esc_uint8_t         type_cnt;
+} esc_mailbox_hdr_t;
+
+typedef esc_mailbox_error_reply {
+    esc_mailbox_hdr_t   mailbox_hdr;
+    esc_uint16_t        type;
+    esc_uint16_t        detail;
+} esc_mailbox_error_reply_t;
 
 #endif // LIBESC_MAILBOX_H
 

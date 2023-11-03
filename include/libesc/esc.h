@@ -149,7 +149,6 @@ typedef struct PACKED ec_slave_sm {
     osal_uint8_t    pdi_control;    //!< \brief PDI Control register.
 } ec_slave_sm_t;
 
-
 //-------------------------------------
 // Distributed Clocks registers.
 //

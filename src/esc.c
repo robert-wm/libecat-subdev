@@ -251,12 +251,13 @@ esc_retval_t esc_al_control_ind(esc_t *pesc, osal_uint8_t al_control_state, osal
             {
                 case ESC_STATE_INIT:
                     // #1.1 | #2
-                    pesc->al_error_flag = OSAL_FALSE;
-
                     if ((pesc->al_error_flag == OSAL_TRUE) && (ack_flag == OSAL_FALSE)) {
                         // #1.1
                         pesc->al_status_code = 0u;
                         pesc->al_state = ESC_STATE_INIT;
+                    } else { // al_error_flag == ESC_FALSE || ack_flag == OSAL_TRUE
+                        // #2
+                        pesc->al_error_flag = OSAL_FALSE;
                     }
 
                     esc_id_info(pesc, id_request);

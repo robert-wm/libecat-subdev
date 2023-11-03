@@ -32,8 +32,14 @@
 #ifndef LIBESC_TYPES_H
 #define LIBESC_TYPES_H
 
+#include <stdint.h>
+
 typedef uint8_t     esc_uint8_t;
 typedef uint16_t    esc_uint16_t;
+typedef uint32_t    esc_uint32_t;
+typedef char        esc_char_t;
+
+typedef uint64_t    esc_off_t;
 typedef uint16_t    osal_uint16_t;
 typedef uint8_t     osal_uint8_t;
 typedef uint32_t    osal_uint32_t;
@@ -42,6 +48,7 @@ typedef uint32_t    osal_uint32_t;
 
 typedef int32_t     esc_retval_t;
 
+typedef uint64_t    esc_size_t;
 typedef uint64_t    osal_size_t;
 typedef uint64_t    osal_off_t;
 
