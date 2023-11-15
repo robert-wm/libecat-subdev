@@ -246,9 +246,15 @@ typedef struct PACKED ec_slave_sm {
 #define ESC_AL_STATUS_CODE__DEVICE_IDENTIFICATION_VALUE_UPDATED             ((osal_uint16_t)0x0061u) //!< \brief Device Identification value updated
 #define ESC_AL_STATUS_CODE__APPLICATION_CONTROLLER_AVAILABLE                ((osal_uint16_t)0x00F0u) //!< \brief Application controller available
 
+struct esc_object;
+
 typedef struct mailbox {
     ec_slave_sm_t sm_receive;
     ec_slave_sm_t sm_send;
+
+    struct {
+        struct esc_object *objects;
+    } coe;
 } mailbox_t;
 
 typedef struct esc {

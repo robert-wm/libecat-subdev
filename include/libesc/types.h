@@ -34,6 +34,9 @@
 
 #include <stdint.h>
 
+typedef int8_t      esc_int8_t;
+typedef int16_t     esc_int16_t;
+typedef int32_t     esc_int32_t;
 typedef uint8_t     esc_uint8_t;
 typedef uint16_t    esc_uint16_t;
 typedef uint32_t    esc_uint32_t;
@@ -59,6 +62,8 @@ typedef uint16_t ec_state_transition_t;
 
 typedef void        osal_void_t;
 typedef void        esc_void_t;
+
+typedef uint8_t     esc_data_t;
 
 #define OSAL_TRUE   1
 #define OSAL_FALSE  0

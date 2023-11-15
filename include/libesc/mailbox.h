@@ -31,6 +31,8 @@
 #ifndef LIBESC_MAILBOX_H
 #define LIBESC_MAILBOX_H
 
+#include <libesc/esc.h>
+
 #define ESC_MBX_TYPE__ERR                           ((esc_uint8_t)0x00u);
 #define ESC_MBX_TYPE__ADS                           ((esc_uint8_t)0x01u)    //!< \brief ADS over EtherCAT (AoE)
 #define ESC_MBX_TYPE__EOE                           ((esc_uint8_t)0x02u)    //!< \brief Ethernet over EtherCAT (EoE)
@@ -51,6 +53,16 @@
 #define ESC_MBXERR_INVALIDSIZE                      ((esc_uint16_t)0x08u)    //!< \brief The length of data is inconsistent 
 #define ESC_MBXERR_SERVICEINWORK                    ((esc_uint16_t)0x09u)    //!< \brief Mailbox service already in use
 
+#define ESC_MBX_HDR__TYPE__MASK                     ((esc_uint8_t)0x0Fu)
+#define ESC_MBX_HDR__TYPE__SHIFT                    ((esc_uint8_t)0u)
+#define ESC_MBX_HDR__TYPE(mbx_hdr)                  (((mbx_hdr)->type_cnt & ESC_MBX_HDR__TYPE__MASK) >> ESC_MBX_HDR__TYPE__SHIFT)
+#define ESC_MBX_HDR__TYPE_SET(mbx_hdr, val)         (mbx_hdr)->type_cnt = ((mbx_hdr)->type_cnt & ~ESC_MBX_HDR__TYPE__MASK) | ((val << ESC_MBX_HDR__TYPE__SHIFT) & ESC_MBX_HDR__TYPE__MASK)
+
+#define ESC_MBX_HDR__CNT__MASK                      ((esc_uint8_t)0x70u)
+#define ESC_MBX_HDR__CNT__SHIFT                     ((esc_uint8_t)4u)
+#define ESC_MBX_HDR__CNT(mbx_hdr)                   (((mbx_hdr)->type_cnt & ESC_MBX_HDR__CNT__MASK) >> ESC_MBX_HDR__CNT__SHIFT)
+#define ESC_MBX_HDR__CNT_SET(mbx_hdr, val)          (mbx_hdr)->type_cnt = ((mbx_hdr)->type_cnt & ~ESC_MBX_HDR__CNT__MASK) | ((val << ESC_MBX_HDR__CNT__SHIFT) & ESC_MBX_HDR__CNT__MASK)
+
 //! \brief Mailbox message header.
 typedef struct esc_mailbox_hdr {
     esc_uint16_t        length;           //!< \brief Actual length of mailbox message without mailbox hdr.
@@ -59,11 +71,18 @@ typedef struct esc_mailbox_hdr {
     esc_uint8_t         type_cnt;         //!< \brief Mailbox message type and count for answer assignment.
 } esc_mailbox_hdr_t;
 
-typedef esc_mailbox_error_reply {
+typedef struct esc_mailbox_error_reply {
     esc_mailbox_hdr_t   mailbox_hdr;
     esc_uint16_t        type;
     esc_uint16_t        detail;
 } esc_mailbox_error_reply_t;
+
+typedef struct esc_mailbox {
+    esc_mailbox_hdr_t   mailbox_hdr;
+    esc_data_t          data[0];
+} esc_mailbox_t;
+    
+esc_retval_t esc_mbx_write(esc_t *pesc, esc_mailbox_t *mbx);
 
 #endif // LIBESC_MAILBOX_H
 

@@ -1,116 +1,108 @@
+/**
+ * \file coe.c
+ *
+ * \author Robert Burger <robert@burger-system.de>
+ *
+ * \date 15 Nov 2023
+ *
+ * \brief ESC CoE source.
+ *
+ * ESC CoE source.
+ */
 
-#define ESC_COE_HDR__SERVICE__MASK                                  ((osal_uint16_t)0xF000)
-#define ESC_COE_HDR__SERVICE__SHIFT                                 ((osal_uint32_t)12)
-#define ESC_COE_HDR__SERVICE(coe_hdr)                               (((coe_hdr).hdr & ESC_COE_HDR__SERVICE__MASK) >> ESC_COE_HDR__SERVICE__SHIFT)
-#define ESC_COE_HDR__SERVICE_SET(coe_hdr, val)                      ((coe_hdr)->hdr & ~ESC_COE_HDR__SERVICE__MASK) | (val << ESC_COE_HDR__SERVICE__SHIFT)
+/*
+ * This file is part of libesc.
+ *
+ * libesc is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ * 
+ * libesc is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libesc; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
 
-#define ESC_COE_HDR__SERVICE__EMERGENCY                             ((osal_uint8_t)0x01u)   //!< \brief Emergency
-#define ESC_COE_HDR__SERVICE__SDO_REQUEST                           ((osal_uint8_t)0x02u)   //!< \brief SDO Request
-#define ESC_COE_HDR__SERVICE__SDO_RESPONSE                          ((osal_uint8_t)0x03u)   //!< \brief SDO Response
-#define ESC_COE_HDR__SERVICE__TXPDO                                 ((osal_uint8_t)0x04u)   //!< \brief TxPDO
-#define ESC_COE_HDR__SERVICE__RXPDO                                 ((osal_uint8_t)0x05u)   //!< \brief RxPDO
-#define ESC_COE_HDR__SERVICE__TXPDO_REMOTE_REQUEST                  ((osal_uint8_t)0x06u)   //!< \brief TxPDO remote request
-#define ESC_COE_HDR__SERVICE__RXPDO_REMOTE_REQUEST                  ((osal_uint8_t)0x07u)   //!< \brief RxPDO remote request
-#define ESC_COE_HDR__SERVICE__SDO_INFORMATION                       ((osal_uint8_t)0x08u)   //!< \brief SDO Information
+#include <libesc/coe.h>
+#include <libesc/object.h>
 
-#define ESC_COE_SDO_HDR__HDR_SIZE__MASK                             ((osal_uint8_t)0x01u)
-#define ESC_COE_SDO_HDR__HDR_SIZE(sdo_hdr)                          ((sdo_hdr).hdr & ESC_COE_SDO_HDR__HDR_SIZE__MASK)
-#define ESC_COE_SDO_HDR__HDR_TRANSFER_TYPE__MASK                    ((osal_uint8_t)0x02u)
-#define ESC_COE_SDO_HDR__HDR_TRANSFER_TYPE__SHIFT                   ((osal_uint32_t)1u)
-#define ESC_COE_SDO_HDR__HDR_TRANSFER_TYPE(sdo_hdr)                 (((sdo_hdr).hdr & ESC_COE_SDO_HDR__HDR_TRANSFER_TYPE__MASK) >> ESC_COE_SDO_HDR__HDR_TRANSFER_TYPE__SHIFT)
+#include <assert.h>
+#include <stddef.h>
 
-#define ESC_COE_SDO_HDR__TRANSFER_TYPE__NORMAL                      ((esc_uint8_t)0u)
-#define ESC_COE_SDO_HDR__TRANSFER_TYPE__EXPEDITED                   ((esc_uint8_t)1u)
+esc_retval_t esc_coe_abort_sdo_transfer_req(esc_t *pesc, esc_coe_abort_sdo_t *mbx, esc_uint32_t abort_code) {
+    
+    // mailbox header
+    mbx->mailbox_hdr.length = 10u;
+    ESC_MBX_HDR__TYPE_SET(&mbx->mailbox_hdr, ESC_MBX_TYPE__COE);
 
-#define ESC_COE_SDO_HDR__DATA_SET_SIZE__MASK                        ((esc_uint8_t)0x0Cu)
-#define ESC_COE_SDO_HDR__DATA_SET_SIZE__SHIFT                       ((esc_uint8_t)2u)
-#define ESC_COE_SDO_HDR__DATA_SET_SIZE(sdo_hdr)                     (((sdo_hdr)->hdr & ESC_COE_SDO_HDR__DATA_SET_SIZE__MASK) >> ESC_COE_SDO_HDR__DATA_SET_SIZE__SHIFT)
-#define ESC_COE_SDO_HDR__DATA_SET_SIZE_SET(sdo_hdr, val)            ((sdo_hdr)->hdr & ~ESC_COE_SDO_HDR__DATA_SET_SIZE__MASK) | (val << ESC_COE_SDO_HDR__DATA_SET_SIZE__SHIFT)
+    // coe header 
+    ESC_COE_HDR__SERVICE_SET(&mbx->coe_hdr, ESC_COE_HDR__SERVICE__SDO_REQUEST);
+    
+    // sdo header
+    ESC_COE_SDO_HDR__COMMAND_SET(&mbx->sdo_hdr, ESC_COE_SDO_HDR__COMMAND__ABORT_REQUEST);
+    mbx->abort_code = abort_code;
 
-#define ESC_COE_SDO_HDR__COMMAND_SPECIFIER__MASK                    ((esc_uint8_t)0xE0u)
-#define ESC_COE_SDO_HDR__COMMAND_SPECIFIER__SHIFT                   ((esc_uint8_t)5u)
-#define ESC_COE_SDO_HDR__COMMAND_SPECIFIER(sdo_hdr)                 (((sdo_hdr)->hdr & ESC_COE_SDO_HDR__COMMAND_SPECIFIER__MASK) >> ESC_COE_SDO_HDR__COMMAND_SPECIFIER__SHIFT)
-#define ESC_COE_SDO_HDR__COMMAND_SPECIFIER_SET(sdo_hdr, val)        ((sdo_hdr)->hdr & ~ESC_COE_SDO_HDR__COMMAND_SPECIFIER__MASK) | (val << ESC_COE_SDO_HDR__COMMAND_SPECIFIER__SHIFT)
-
-#define ESC_COE_SDO_HDR__COMMAND_SPECIFIER__DOWNLOAD_SEGMENT_REQUEST    ((esc_uint8_t)0x00u)    //!< \brief Download Segment Request
-#define ESC_COE_SDO_HDR__COMMAND_SPECIFIER__DOWNLOAD_REQUEST            ((esc_uint8_t)0x01u)    //!< \brief Download Request
-#define ESC_COE_SDO_HDR__COMMAND_SPECIFIER__UPLOAD_REQUEST              ((esc_uint8_t)0x02u)    //!< \brief Upload Request
-#define ESC_COE_SDO_HDR__COMMAND_SPECIFIER__UPLOAD_SEGMENT_REQUEST      ((esc_uint8_t)0x03u)    //!< \brief Upload Segment Request
-#define ESC_COE_SDO_HDR__COMMAND_SPECIFIER__ABORT_REQUEST               ((esc_uint8_t)0x04u)    //!< \brief Abort Transfer Request
-
-#define ESC_COE_SDO_HDR__COMMAND_SPECIFIER__DOWNLOAD_SEGMENT_RESPONSE   ((esc_uint8_t)0x01u)    //!< \brief Download Segment Response
-#define ESC_COE_SDO_HDR__COMMAND_SPECIFIER__DOWNLOAD_RESPONSE           ((esc_uint8_t)0x03u)    //!< \brief Download Response
-#define ESC_COE_SDO_HDR__COMMAND_SPECIFIER__UPLOAD_RESPONSE             ((esc_uint8_t)0x02u)    //!< \brief Upload Response
-#define ESC_COE_SDO_HDR__COMMAND_SPECIFIER__UPLOAD_SEGMENT_RESPONSE     ((esc_uint8_t)0x00u)    //!< \brief Upload Segment Response
-
-#define ESC_COE_SDO_INFO_HDR__GET_OD_LIST_REQUEST                   ((esc_uint8_t)0x01u)    //!< \brief Get OD List Request
-#define ESC_COE_SDO_INFO_HDR__GET_OD_LIST_RESPONSE                  ((esc_uint8_t)0x02u)    //!< \brief Get OD List Response
-#define ESC_COE_SDO_INFO_HDR__GET_OBJECT_DESCRIPTION_REQUEST        ((esc_uint8_t)0x03u)    //!< \brief Get Object Description Request
-#define ESC_COE_SDO_INFO_HDR__GET_OBJECT_DESCRIPTION_RESPONSE       ((esc_uint8_t)0x04u)    //!< \brief Get Object Description Response
-#define ESC_COE_SDO_INFO_HDR__GET_ENTRY_DESCRIPTION_REQUEST         ((esc_uint8_t)0x05u)    //!< \brief Get Entry Description Request
-#define ESC_COE_SDO_INFO_HDR__GET_ENTRY_DESCRIPTION_RESPONSE        ((esc_uint8_t)0x06u)    //!< \brief Get Entry Description Response
-#define ESC_COE_SDO_INFO_HDR__SDO_INFO_ERROR_REQUEST                ((esc_uint8_t)0x07u)    //!< \brief SDO Info Error Request
-
-
-esc_void_t esc_coe_sdo_download_expedited_ind(esc_t *pesc, esc_uint16_t address, esc_uint16_t index, esc_uint8_t sub_index, esc_size_t size, esc_uint8_t *data);
-esc_void_t esc_coe_sdo_download_normal_ind(esc_t *pesc, esc_uint16_t address, esc_uint16_t index, esc_uint8_t sub_index, esc_size_t complete_size, esc_size_t size, esc_uint8_t *data);
-esc_void_t esc_coe_download_sdo_segment_ind(esc_t *pesc, esc_uint16_t address, esc_bool_t toggle, esc_bool_t more_follows, esc_size_t_size, esc_uint8_t *data);
-esc_void_t esc_coe_sdo_upload_expedited_ind(esc_t *pesc, esc_uint16_t address, esc_uint16_t index, esc_uint8_t sub_index);
-
-typedef struct esc_coe_hdr {
-    esc_uint16_t        hdr;
-} esc_coe_hdr_t;
-
-typedef struct esc_coe_service_data {
-    esc_mailbox_hdr_t   mailbox_hdr;
-    esc_coe_hdr_t       coe_hdr;
-    esc_data_t          data[0];
-} esc_coe_service_data_t;
-
-typedef struct esc_coe_sdo_hdr {
-    esc_uint8_t         hdr;
-    esc_uint16_t        index;
-    esc_uint8_t         sub_index;
-} esc_coe_sdo_hdr_t;
-
-typedef struct esc_coe_sdo_download_expedited {
-    esc_mailbox_hdr_t   mailbox_hdr;
-    esc_coe_hdr_t       coe_hdr;
-    esc_coe_sdo_hdr_t   sdo_hdr;
-    esc_data_t          data[0];
-} esc_coe_sdo_download_expedited_t;
+    esc_mbx_write(pesc, (esc_mailbox_t *)mbx);
+}
 
 esc_retval_t esc_coe_sdo_download_expedited_ind(esc_t *pesc, esc_coe_sdo_download_expedited_t *mbx) {
     assert(pesc != NULL);
     esc_retval_t ret = ESC_OK;
+    esc_uint32_t abort_code = 0u;
+    esc_object_t *obj = NULL;
 
-    esc_bool_t   complete_access = mbx->sdo_hdr.complete_access;
+    esc_bool_t   complete_access = ESC_COE_SDO_HDR__COMPLETE_ACCESS(&mbx->sdo_hdr);
     esc_uint16_t index           = mbx->sdo_hdr.index;
     esc_uint8_t  sub_index       = mbx->sdo_hdr.sub_index;
-    esc_size_t   data_set_size   = ESC_COE_SDO_HDR__DATA_SET_SIZE(&mbx->sdo_hdr);
+    esc_size_t   data_set_size   = 4u - ESC_COE_SDO_HDR__DATA_SET_SIZE(&mbx->sdo_hdr);
     esc_uint8_t *data            = &mbx->data[0];
-    esc_size_t   data_length     = mbx->mailbox_hdr.length - 10;
 
-    // write downloaded SDO to dictionary
-    esc_obj_write_object(esc, index, sub_index, complete_access, *data, data_set_size);
+    obj = esc_obj_get_object(pesc, index);
+    if (obj == NULL) {
+        // ERROR object index not found
+        abort_code = ESC_SDO_ABORT_CODE__OBJECT_DOES_NOT_EXIST;
+    } else {
+        // write downloaded SDO to dictionary
+        if (complete_access == ESC_TRUE) {
+            if (sub_index != 0) {
+                // ERROR unsupported access
+                abort_code = ESC_SDO_ABORT_CODE__UNSUPPORTED_ACCESS;
+            } else {
+                abort_code = esc_obj_write_object(obj, pesc->al_state, data, data_set_size);
+            }
+        } else {
+            abort_code = esc_obj_write_object_entry(obj, sub_index, pesc->al_state, data, data_set_size);
+        }
+    }
+                
+    if (abort_code != ESC_OK) {
+        // #28
+        // ERROR return obj_ret error code.
+        esc_coe_abort_sdo_transfer_req(pesc, (esc_coe_abort_sdo_t *)mbx, abort_code);
+    }
 
     mbx->coe_hdr.hdr = 0u;
     ESC_COE_HDR__SERVICE_SET(&mbx->coe_hdr, ESC_COE_HDR__SERVICE__SDO_RESPONSE);
     
     mbx->sdo_hdr.hdr = 0u;
-    ESC_COE_SDO_HDR__COMMAND_SPECIFIER_SET(&mbx->sdo_hdr, ESC_COE_SDO_HDR__COMMAND_SPECIFIER__DOWNLOAD_RESPONSE);
+    ESC_COE_SDO_HDR__COMMAND_SET(&mbx->sdo_hdr, ESC_COE_SDO_HDR__COMMAND__DOWNLOAD_RESPONSE);
 
     return ret;
 }
 
-esc_retval_t esc_coe_sdo_download_normal_ind(esc_t *pesc, esc_coe_sdo_download_expedited_t *mbx) {
+esc_retval_t esc_coe_sdo_download_normal_ind(esc_t *pesc, esc_coe_sdo_download_normal_t *mbx) {
     assert(pesc != NULL);
     esc_retval_t ret = ESC_OK;
 
-    esc_bool_t   complete_access = mbx->sdo_hdr.complete_access;
+    esc_bool_t   complete_access = ESC_COE_SDO_HDR__COMPLETE_ACCESS(&mbx->sdo_hdr);
     esc_uint16_t index           = mbx->sdo_hdr.index;
     esc_uint8_t  sub_index       = mbx->sdo_hdr.sub_index;
-    esc_size_t   complete_size   = *(esc_uint32_t *)&mbx->data[0];
+    esc_size_t   complete_size   = mbx->complete_size;
     esc_uint8_t *data            = &mbx->data[4];
     esc_size_t   data_length     = mbx->mailbox_hdr.length - 10;
 
@@ -122,7 +114,7 @@ esc_retval_t esc_coe_sdo_download_normal_ind(esc_t *pesc, esc_coe_sdo_download_e
         ESC_COE_HDR__SERVICE_SET(&mbx->coe_hdr, ESC_COE_HDR__SERVICE__SDO_REQUEST);
 
         mbx->sdo_hdr.hdr = 0u;
-        ESC_COE_SDO_HDR__COMMAND_SPECIFIER_SET(&mbx->sdo_hdr, ESC_COE_SDO_HDR__COMMAND_SPECIFIER__ABORT_REQUEST);
+        ESC_COE_SDO_HDR__COMMAND_SET(&mbx->sdo_hdr, ESC_COE_SDO_HDR__COMMAND__ABORT_REQUEST);
 
         mbx->sdo_hdr.index = index;
         mbx->sdo_hdr.sub_index = sub_index;
@@ -132,7 +124,7 @@ esc_retval_t esc_coe_sdo_download_normal_ind(esc_t *pesc, esc_coe_sdo_download_e
         ESC_COE_HDR__SERVICE_SET(&mbx->coe_hdr, ESC_COE_HDR__SERVICE__SDO_RESPONSE);
 
         mbx->sdo_hdr.hdr = 0u;
-        ESC_COE_SDO_HDR__COMMAND_SPECIFIER_SET(&mbx->sdo_hdr, ESC_COE_SDO_HDR__COMMAND_SPECIFIER__DOWNLOAD_RESPONSE);
+        ESC_COE_SDO_HDR__COMMAND_SET(&mbx->sdo_hdr, ESC_COE_SDO_HDR__COMMAND__DOWNLOAD_RESPONSE);
     }
 
     return ret;
@@ -143,8 +135,8 @@ esc_retval_t esc_coe_sdo_request(esc_t *pesc, esc_coe_sdo_request_t *mbx) {
     assert(pesc != NULL);
     esc_retval_t ret = ESC_OK;
 
-    switch (ESC_COE_SDO_HDR__COMMAND_SPECIFIER(*mbx)) {
-        case ESC_COE_SDO_HDR__COMMAND_SPECIFIER__DOWNLOAD_SEGMENT_REQUEST:
+    switch (ESC_COE_SDO_HDR__COMMAND(*mbx)) {
+        case ESC_COE_SDO_HDR__COMMAND__DOWNLOAD_SEGMENT_REQUEST:
             // #11 | #12
             if (mbx->mailbox_hdr.length < 10) {
                 // #11
@@ -153,7 +145,7 @@ esc_retval_t esc_coe_sdo_request(esc_t *pesc, esc_coe_sdo_request_t *mbx) {
                 // #12
             }
             break;
-        case ESC_COE_SDO_HDR__COMMAND_SPECIFIER__DOWNLOAD_REQUEST:
+        case ESC_COE_SDO_HDR__COMMAND__DOWNLOAD_REQUEST:
             // #7 | #8 | #9 | #10 
             if (ESC_COE_SDO_HDR__HDR_TRANSFER_TYPE(*mbx) == ESC_COE_SDO_HDR__TRANSFER_TYPE__EXPEDITED) {
                 // #7 | #8
@@ -174,10 +166,10 @@ esc_retval_t esc_coe_sdo_request(esc_t *pesc, esc_coe_sdo_request_t *mbx) {
                 }
             }
             break;
-        case ESC_COE_SDO_HDR__COMMAND_SPECIFIER__UPLOAD_REQUEST:
+        case ESC_COE_SDO_HDR__COMMAND__UPLOAD_REQUEST:
             // #13 | #14 | #15 | #16
             break;
-        case ESC_COE_SDO_HDR__COMMAND_SPECIFIER__UPLOAD_SEGMENT_REQUEST:
+        case ESC_COE_SDO_HDR__COMMAND__UPLOAD_SEGMENT_REQUEST:
             break;
             // #17 | #18
         default:
@@ -188,20 +180,20 @@ esc_retval_t esc_coe_sdo_request(esc_t *pesc, esc_coe_sdo_request_t *mbx) {
 
     if ( 
             (sd->mailbox_hdr.length != 10) && 
-            (ESC_COE_SDO_HDR__COMMAND_SPECIFIER(*sdo_hdr) == ESC_COE_SDO_HDR__COMMAND_SPECIFIER__DOWNLOAD_REQUEST) && 
+            (ESC_COE_SDO_HDR__COMMAND(*sdo_hdr) == ESC_COE_SDO_HDR__COMMAND__DOWNLOAD_REQUEST) && 
             (ESC_COE_SDO_HDR__HDR_TRANSFER_TYPE(*sdo_hdr) == ESC_COE_SDO_HDR__TRANSFER_TYPE__EXPEDITED)     ) 
     {
         // #7
         esc_coe_mailbox_error_reply(pesc, ESC_MBXERR_INVALIDSIZE, (esc_mailbox_error_reply_t *)sd);
     } else if (
             (sd->mailbox_hdr.length == 10) &&
-            (ESC_COE_SDO_HDR__COMMAND_SPECIFIER(*sdo_hdr) == ESC_COE_SDO_HDR__COMMAND_SPECIFIER__DOWNLOAD_REQUEST) &&
+            (ESC_COE_SDO_HDR__COMMAND(*sdo_hdr) == ESC_COE_SDO_HDR__COMMAND__DOWNLOAD_REQUEST) &&
             (ESC_COE_SDO_HDR__HDR_TRANSFER_TYPE(*sdo_hdr) == ESC_COE_SDO_HDR__TRANSFER_TYPE__EXPEDITED) ) {
         // #8
         // TODO
     } else if (
             (sd->mailbox_hdr.length >= 10) &&
-            (ESC_COE_SDO_HDR__COMMAND_SPECIFIER(*sdo_hdr) == ESC_COE_SDO_HDR__COMMAND_SPECIFIER__DOWNLOAD_REQUEST) &&
+            (ESC_COE_SDO_HDR__COMMAND(*sdo_hdr) == ESC_COE_SDO_HDR__COMMAND__DOWNLOAD_REQUEST) &&
             (ESC_COE_SDO_HDR__HDR_TRANSFER_TYPE(*sdo_hdr) == ESC_COE_SDO_HDR__TRANSFER_TYPE__NORMAL)    ) {
         // #9
         // TODO
