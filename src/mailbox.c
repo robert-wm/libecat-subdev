@@ -30,6 +30,29 @@
 
 #include <libesc/mailbox.h>
 
+//! \brief 
+/*!
+ * Refer to Service Definition ETG.1000.3
+ */
+osal_uint32_t esc_mailbox_write_ind(esc_t *pesc, esc_mbx_service_data_t *sd) {
+    assert (pesc != NULL);
+    osal_uint32_t ret = 0u;
+
+    return ret;
+}
+
+//! \brief 
+/*!
+ * Refer to Service Definition ETG.1000.3
+ */
+osal_uint32_t esc_mailbox_read_upd_cnf(esc_t *pesc, esc_bool_t success) {
+    assert (pesc != NULL);
+    osal_uint32_t ret = 0u;
+
+    return ret;
+}
+
+
 osal_uint32_t esc_mailbox_written(esc_t *pesc) {
     osal_uint32_t ret = 0u;
 
