@@ -28,15 +28,21 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include <libesc/mailbox.h>
+#include <libecat-base/types.h>
+#include <libecat-subdev/hw.h>
+#include <libecat-subdev/mailbox.h>
+
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
 
 //! \brief 
 /*!
  * Refer to Service Definition ETG.1000.3
  */
-osal_uint32_t esc_mailbox_write_ind(esc_t *pesc, esc_mbx_service_data_t *sd) {
-    assert (pesc != NULL);
-    osal_uint32_t ret = 0u;
+ec_uint32_t esc_mailbox_write_ind(struct ecsd *pecsd, struct ec_mailbox *mbx) {
+    assert (pecsd != NULL);
+    ec_uint32_t ret = 0u;
 
     return ret;
 }
@@ -45,33 +51,38 @@ osal_uint32_t esc_mailbox_write_ind(esc_t *pesc, esc_mbx_service_data_t *sd) {
 /*!
  * Refer to Service Definition ETG.1000.3
  */
-osal_uint32_t esc_mailbox_read_upd_cnf(esc_t *pesc, esc_bool_t success) {
-    assert (pesc != NULL);
-    osal_uint32_t ret = 0u;
+ec_uint32_t esc_mailbox_read_upd_cnf(struct ecsd *pecsd, ec_bool_t success) {
+    assert (pecsd != NULL);
+    ec_uint32_t ret = 0u;
 
     return ret;
 }
 
 
-osal_uint32_t esc_mailbox_written(esc_t *pesc) {
-    osal_uint32_t ret = 0u;
+ec_uint32_t esc_mailbox_written(struct ecsd *pecsd) {
+    ec_uint32_t ret = 0u;
+
 
     // Get receive mailbox from ESC.
+    struct ec_mailbox mbx;
+    ec_size_t ret_size = hw_read(pecsd, pecsd->mbx.sm_receive.address, (ec_uint8_t *)&mbx, pecsd->mbx.sm_receive.length);
+    (void)ret_size;
+    ec_uint8_t type = EC_MBX_HDR__TYPE(&mbx.mailbox_hdr);
 
     switch (type) {
-        case ESC_MAILBOX_COE:
+        case EC_MBX_HDR__TYPE__COE:
             // TODO ...
             break;
-        case ESC_MAILBOX_FOE:
+        case EC_MBX_HDR__TYPE__FOE:
             // TODO
             break;
-        case ESC_MAILBOX_EOE:
+        case EC_MBX_HDR__TYPE__EOE:
             // TODO
             break;
-        case ESC_MAILBOX_SOE:
+        case EC_MBX_HDR__TYPE__SOE:
             // TODO
             break;
-        case ESC_MAILBOX_VOE:
+        case EC_MBX_HDR__TYPE__VOE:
             // TODO
             break;
         default:

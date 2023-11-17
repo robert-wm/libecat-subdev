@@ -49,13 +49,13 @@
 #define EC_MBX_HDR__TYPE__SHIFT                    ((ec_uint8_t)0u)
 #define EC_MBX_HDR__TYPE(mbx_hdr)                  (((mbx_hdr)->type_cnt & EC_MBX_HDR__TYPE__MASK) >> EC_MBX_HDR__TYPE__SHIFT)
 #define EC_MBX_HDR__TYPE__SET(mbx_hdr, val)        (mbx_hdr)->type_cnt = ((mbx_hdr)->type_cnt & ~EC_MBX_HDR__TYPE__MASK) | ((val << EC_MBX_HDR__TYPE__SHIFT) & EC_MBX_HDR__TYPE__MASK)
-#define EC_MBX_HDR__TYPE__ERR                      ((ec_uint8_t)0x00u);
+#define EC_MBX_HDR__TYPE__ERR                      ((ec_uint8_t)0x00u)
 #define EC_MBX_HDR__TYPE__ADS                      ((ec_uint8_t)0x01u)    //!< \brief ADS over EtherCAT (AoE)
 #define EC_MBX_HDR__TYPE__EOE                      ((ec_uint8_t)0x02u)    //!< \brief Ethernet over EtherCAT (EoE)
 #define EC_MBX_HDR__TYPE__COE                      ((ec_uint8_t)0x03u)    //!< \brief CAN application protocol over EtherCAT (CoE)
 #define EC_MBX_HDR__TYPE__FOE                      ((ec_uint8_t)0x04u)    //!< \brief File Access over EtherCAT (FoE)
 #define EC_MBX_HDR__TYPE__SOE                      ((ec_uint8_t)0x05u)    //!< \brief Servo profile over EtherCAT (SoE)
-#define EC_MBX_HDR__TYPE__VEN                      ((ec_uint8_t)0x0fu)    //!< \brief vendor specific
+#define EC_MBX_HDR__TYPE__VOE                      ((ec_uint8_t)0x0fu)    //!< \brief vendor specific
 
 #define EC_MBX_HDR__CNT__MASK                      ((ec_uint8_t)0x70u)
 #define EC_MBX_HDR__CNT__SHIFT                     ((ec_uint8_t)4u)
@@ -63,23 +63,23 @@
 #define EC_MBX_HDR__CNT__SET(mbx_hdr, val)         (mbx_hdr)->type_cnt = ((mbx_hdr)->type_cnt & ~EC_MBX_HDR__CNT__MASK) | ((val << EC_MBX_HDR__CNT__SHIFT) & EC_MBX_HDR__CNT__MASK)
 
 //! \brief Mailbox message header.
-typedef struct __attribute__((__packed__)) ec_mailbox_hdr {
-    ec_uint16_t        length;           //!< \brief Actual length of mailbox message without mailbox hdr.
-    ec_uint16_t        address;          //!< \brief Mailbox message address field.  
-    ec_uint8_t         channel_priority; //!< \brief Mailbox channel and pririoty.
-    ec_uint8_t         type_cnt;         //!< \brief Mailbox message type and count for answer assignment.
-} ec_mailbox_hdr_t;
+struct ec_mailbox_hdr {
+    ec_uint16_t length;                 //!< \brief Actual length of mailbox message without mailbox hdr.
+    ec_uint16_t address;                //!< \brief Mailbox message address field.  
+    ec_uint8_t channel_priority;        //!< \brief Mailbox channel and pririoty.
+    ec_uint8_t type_cnt;                //!< \brief Mailbox message type and count for answer assignment.
+} __attribute__((__packed__));
 
-typedef struct __attribute__((__packed__)) ec_mailbox_error_reply {
-    ec_mailbox_hdr_t   mailbox_hdr;     //!< \brief Mailbox header.
-    ec_uint16_t        type;            //!< \brief Mailbox content type.
-    ec_uint16_t        detail;          //!< \brief Mailbox content details.
-} ec_mailbox_error_reply_t;
+struct ec_mailbox_error_reply {
+    struct ec_mailbox_hdr mailbox_hdr;  //!< \brief Mailbox header.
+    ec_uint16_t type;                   //!< \brief Mailbox content type.
+    ec_uint16_t detail;                 //!< \brief Mailbox content details.
+} __attribute__((__packed__));
 
-typedef struct __attribute__((__packed__)) ec_mailbox {
-    ec_mailbox_hdr_t   mailbox_hdr;     //!< \brief Mailbox header.
-    ec_data_t          data[0];         //!< \brief Mailbox content payload.
-} ec_mailbox_t;
+struct ec_mailbox {
+    struct ec_mailbox_hdr mailbox_hdr;  //!< \brief Mailbox header.
+    ec_data_t data[0];                  //!< \brief Mailbox content payload.
+} __attribute__((__packed__));
     
 #endif // LIBECAT_BASE_MAILBOX_H
 

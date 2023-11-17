@@ -34,32 +34,28 @@
 
 #include <stdint.h>
 
-typedef int8_t      ecsd_int8_t;
-typedef int16_t     ecsd_int16_t;
-typedef int32_t     ecsd_int32_t;
-typedef uint8_t     ecsd_uint8_t;
-typedef uint16_t    ecsd_uint16_t;
-typedef uint32_t    ecsd_uint32_t;
-typedef char        ecsd_char_t;
+typedef char        ec_char_t;
+typedef int8_t      ec_int8_t;
+typedef int16_t     ec_int16_t;
+typedef int32_t     ec_int32_t;
+typedef int32_t     ec_retval_t;
 
-typedef uint64_t    ecsd_off_t;
+typedef uint8_t     ec_data_t;
+typedef uint8_t     ec_uint8_t;
+typedef uint8_t     ec_bool_t;
+typedef uint16_t    ec_uint16_t;
+typedef uint16_t    ec_state_transition_t;
+typedef uint32_t    ec_uint32_t;
+typedef uint64_t    ec_off_t;
+typedef uint64_t    ec_size_t;
 
 #define PACKED      __attribute__((__packed__))
 
-typedef int32_t     ecsd_retval_t;
+typedef void        ec_void_t;
+typedef ec_uint32_t    ec_abort_code;
 
-typedef uint64_t    ecsd_size_t;
-
-typedef uint8_t     ecsd_bool_t;
-
-typedef uint16_t    ecsd_state_transition_t;
-
-typedef void        ecsd_void_t;
-
-typedef uint8_t     ecsd_data_t;
-
-#define ECSD_TRUE   1
-#define ECSD_FALSE  0
-#define ECSD_OK      0
+#define EC_TRUE   1
+#define EC_FALSE  0
+#define EC_OK      0
 
 #endif

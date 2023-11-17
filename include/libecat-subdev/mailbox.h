@@ -34,7 +34,11 @@
 #include <libecat-subdev/esc.h>
 #include <libecat-base/mailbox.h>
 
-ec_retval_t ecsd_mbx_write(ecsd_t *pesc, ec_mailbox_t *mbx);
+#define MAILBOX_STATE_IDLE      1
+#define MAILBOX_STATE_INF       2
+#define MAILBOX_STATE_ERR       3
+
+ec_retval_t ecsd_mbx_write(struct ecsd *pesc, struct ec_mailbox *mbx);
 
 #endif // LIBECAT_SUBDEV_MAILBOX_H
 

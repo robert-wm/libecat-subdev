@@ -32,38 +32,38 @@
 #define LIBECAT_SUBDEV_COE_H
 
 #include <stdint.h>
-#include <libecat-subdev/types.h>
 #include <libecat-subdev/mailbox.h>
 #include <libecat-subdev/esc.h>
+#include <libecat-base/types.h>
 #include <libecat-base/coe.h>
 
 //! \brief CoE SDO download expedited indication.
 /*!
- * \param[in]   pesc        Pointer to EtherCAT SubDevice structure.
+ * \param[in]   pecsd        Pointer to EtherCAT SubDevice structure.
  * \param[in]   mbx         Mailbox message to process.
  */
-ec_retval_t ecsd_coe_sdo_download_expedited_ind(ecsd_t *pesc, ec_coe_sdo_download_expedited_t *mbx);
+ec_retval_t ecsd_coe_sdo_download_expedited_ind(struct ecsd *pecsd, struct ec_coe_sdo_download_expedited *mbx);
 
 //! \brief CoE SDO download normal indication.
 /*!
- * \param[in]   pesc        Pointer to EtherCAT SubDevice structure.
+ * \param[in]   pecsd        Pointer to EtherCAT SubDevice structure.
  * \param[in]   mbx         Mailbox message to process.
  */
-ec_retval_t ecsd_coe_sdo_download_normal_ind(ecsd_t *pesc, ec_coe_sdo_download_normal_t *mbx);
+ec_retval_t ecsd_coe_sdo_download_normal_ind(struct ecsd *pecsd, struct ec_coe_sdo_download_normal *mbx);
 
 //! \brief CoE SDO download segment indication.
 /*!
- * \param[in]   pesc        Pointer to EtherCAT SubDevice structure.
+ * \param[in]   pecsd        Pointer to EtherCAT SubDevice structure.
  * \param[in]   mbx         Mailbox message to process.
  */
-ec_retval_t ecsd_coe_download_sdo_segment_ind(ecsd_t *pesc, ec_uint16_t address, ecsd_bool_t toggle, ecsd_bool_t more_follows, ecsd_size_t size, ecsd_uint8_t *data);
+ec_retval_t ecsd_coe_download_sdo_segment_ind(struct ecsd *pecsd, ec_uint16_t address, ec_bool_t toggle, ec_bool_t more_follows, ec_size_t size, ec_uint8_t *data);
 
 //! \brief CoE SDO upload expedited indication.
 /*!
- * \param[in]   pesc        Pointer to EtherCAT SubDevice structure.
+ * \param[in]   pecsd        Pointer to EtherCAT SubDevice structure.
  * \param[in]   mbx         Mailbox message to process.
  */
-ec_retval_t ecsd_coe_sdo_upload_expedited_ind(ecsd_t *pesc, ec_uint16_t address, ecsd_uint16_t index, ec_uint8_t sub_index);
+ec_retval_t ecsd_coe_sdo_upload_expedited_ind(struct ecsd *pecsd, ec_uint16_t address, ec_uint16_t index, ec_uint8_t sub_index);
 
 #endif // LIBECAT_SUBDEV_COE_H
 

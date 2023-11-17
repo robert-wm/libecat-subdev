@@ -31,11 +31,17 @@
 #ifndef LIBECAT_SUBDEV_HW_H
 #define LIBECAT_SUBDEV_HW_H
 
-#include <libecat-subdev/types.h>
+#include <libecat-base/types.h>
 
-typedef struct hw {
-    ecsd_uint8_t *ecsd_base;
-} hw_t;
+// forward declarations
+struct ecsd;
+
+struct hw {
+    ec_uint8_t *ecsd_base;
+
+    ec_bool_t sync0_mapped_to_al_status;
+    ec_bool_t sync1_mapped_to_al_status;
+};
 
 //! \brief copy bytes from ESC memory to local memory
 /*!
@@ -46,7 +52,7 @@ typedef struct hw {
  *
  * \return Number of bytes copied.
  */
-ecsd_size_t hw_read(ecsd_t *pesc, ecsd_off_t adr, ecsd_uint8_t *buf, ecsd_size_t buf_len);
+ec_size_t hw_read(struct ecsd *pecsd, ec_off_t adr, ec_uint8_t *buf, ec_size_t buf_len);
 
 //! \brief copy bytes from local memory to ESC memory
 /*!
@@ -57,7 +63,7 @@ ecsd_size_t hw_read(ecsd_t *pesc, ecsd_off_t adr, ecsd_uint8_t *buf, ecsd_size_t
  *
  * \return Number of bytes copied.
  */
-ecsd_size_t hw_write(ecsd_t *pesc, ecsd_off_t adr, ecsd_uint8_t *buf, ecsd_size_t buf_len);
+ec_size_t hw_write(struct ecsd *pecsd, ec_off_t adr, ec_uint8_t *buf, ec_size_t buf_len);
 
 //! \brief Opens and initializes ESC hardware
 /*!
@@ -67,7 +73,7 @@ ecsd_size_t hw_write(ecsd_t *pesc, ecsd_off_t adr, ecsd_uint8_t *buf, ecsd_size_
  *
  * \retval  OK on success.
  */
-ecsd_uint32_t hw_open(ecsd_t *pesc, void *ecsd_base, ecsd_uint16_t pdi_type);
+ec_uint32_t hw_open(struct ecsd *pecsd, void *ecsd_base, ec_uint16_t pdi_type);
 
 #endif // LIBECAT_SUBDEV_HW_H
 
