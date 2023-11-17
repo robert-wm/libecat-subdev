@@ -11,30 +11,30 @@
  */
 
 /*
- * This file is part of libesc.
+ * This file is part of libecat-subdev.
  *
- * libesc is free software; you can redistribute it and/or
+ * libecat-subdev is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
  * 
- * libesc is distributed in the hope that it will be useful,
+ * libecat-subdev is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  * 
  * You should have received a copy of the GNU Lesser General Public License
- * along with libesc; if not, write to the Free Software Foundation,
+ * along with libecat-subdev; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef LIBESC_HW_H
-#define LIBESC_HW_H
+#ifndef LIBECAT_SUBDEV_HW_H
+#define LIBECAT_SUBDEV_HW_H
 
-#include <libesc/types.h>
+#include <libecat-subdev/types.h>
 
 typedef struct hw {
-    osal_uint8_t *esc_base;
+    ecsd_uint8_t *ecsd_base;
 } hw_t;
 
 //! \brief copy bytes from ESC memory to local memory
@@ -46,7 +46,7 @@ typedef struct hw {
  *
  * \return Number of bytes copied.
  */
-osal_size_t hw_read(esc_t *pesc, osal_off_t adr, osal_uint8_t *buf, osal_size_t buf_len);
+ecsd_size_t hw_read(ecsd_t *pesc, ecsd_off_t adr, ecsd_uint8_t *buf, ecsd_size_t buf_len);
 
 //! \brief copy bytes from local memory to ESC memory
 /*!
@@ -57,17 +57,17 @@ osal_size_t hw_read(esc_t *pesc, osal_off_t adr, osal_uint8_t *buf, osal_size_t 
  *
  * \return Number of bytes copied.
  */
-osal_size_t hw_write(esc_t *pesc, osal_off_t adr, osal_uint8_t *buf, osal_size_t buf_len);
+ecsd_size_t hw_write(ecsd_t *pesc, ecsd_off_t adr, ecsd_uint8_t *buf, ecsd_size_t buf_len);
 
 //! \brief Opens and initializes ESC hardware
 /*!
  * \param[in]   pesc        Pointer to ESC struture.
- * \param[in]   esc_base    Base address of ESC memory.
+ * \param[in]   ecsd_base    Base address of ESC memory.
  * \param[in]   pdi_type    Type of PDI waiting for ESC to become ready.
  *
  * \retval  OK on success.
  */
-osal_uint32_t hw_open(esc_t *pesc, void *esc_base, osal_uint16_t pdi_type);
+ecsd_uint32_t hw_open(ecsd_t *pesc, void *ecsd_base, ecsd_uint16_t pdi_type);
 
-#endif // LIBESC_HW_H
+#endif // LIBECAT_SUBDEV_HW_H
 

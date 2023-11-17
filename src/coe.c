@@ -38,13 +38,13 @@ esc_retval_t esc_coe_abort_sdo_transfer_req(esc_t *pesc, esc_coe_abort_sdo_t *mb
     
     // mailbox header
     mbx->mailbox_hdr.length = 10u;
-    ESC_MBX_HDR__TYPE_SET(&mbx->mailbox_hdr, ESC_MBX_TYPE__COE);
+    EC_MBX_HDR__TYPE_SET(&mbx->mailbox_hdr, ESC_MBX_TYPE__COE);
 
     // coe header 
-    ESC_COE_HDR__SERVICE_SET(&mbx->coe_hdr, ESC_COE_HDR__SERVICE__SDO_REQUEST);
+    EC_COE_HDR__SERVICE_SET(&mbx->coe_hdr, EC_COE_HDR__SERVICE__SDO_REQUEST);
     
     // sdo header
-    ESC_COE_SDO_HDR__COMMAND_SET(&mbx->sdo_hdr, ESC_COE_SDO_HDR__COMMAND__ABORT_REQUEST);
+    EC_COE_SDO_HDR__COMMAND_SET(&mbx->sdo_hdr, EC_COE_SDO_HDR__COMMAND__ABORT_REQUEST);
     mbx->abort_code = abort_code;
 
     esc_mbx_write(pesc, (esc_mailbox_t *)mbx);
@@ -56,10 +56,10 @@ esc_retval_t esc_coe_sdo_download_expedited_ind(esc_t *pesc, esc_coe_sdo_downloa
     esc_uint32_t abort_code = 0u;
     esc_object_t *obj = NULL;
 
-    esc_bool_t   complete_access = ESC_COE_SDO_HDR__COMPLETE_ACCESS(&mbx->sdo_hdr);
+    esc_bool_t   complete_access = EC_COE_SDO_HDR__COMPLETE_ACCESS(&mbx->sdo_hdr);
     esc_uint16_t index           = mbx->sdo_hdr.index;
     esc_uint8_t  sub_index       = mbx->sdo_hdr.sub_index;
-    esc_size_t   data_set_size   = 4u - ESC_COE_SDO_HDR__DATA_SET_SIZE(&mbx->sdo_hdr);
+    esc_size_t   data_set_size   = 4u - EC_COE_SDO_HDR__DATA_SET_SIZE(&mbx->sdo_hdr);
     esc_uint8_t *data            = &mbx->data[0];
 
     obj = esc_obj_get_object(pesc, index);
@@ -87,10 +87,10 @@ esc_retval_t esc_coe_sdo_download_expedited_ind(esc_t *pesc, esc_coe_sdo_downloa
     }
 
     mbx->coe_hdr.hdr = 0u;
-    ESC_COE_HDR__SERVICE_SET(&mbx->coe_hdr, ESC_COE_HDR__SERVICE__SDO_RESPONSE);
+    EC_COE_HDR__SERVICE_SET(&mbx->coe_hdr, EC_COE_HDR__SERVICE__SDO_RESPONSE);
     
     mbx->sdo_hdr.hdr = 0u;
-    ESC_COE_SDO_HDR__COMMAND_SET(&mbx->sdo_hdr, ESC_COE_SDO_HDR__COMMAND__DOWNLOAD_RESPONSE);
+    EC_COE_SDO_HDR__COMMAND_SET(&mbx->sdo_hdr, EC_COE_SDO_HDR__COMMAND__DOWNLOAD_RESPONSE);
 
     return ret;
 }
@@ -99,7 +99,7 @@ esc_retval_t esc_coe_sdo_download_normal_ind(esc_t *pesc, esc_coe_sdo_download_n
     assert(pesc != NULL);
     esc_retval_t ret = ESC_OK;
 
-    esc_bool_t   complete_access = ESC_COE_SDO_HDR__COMPLETE_ACCESS(&mbx->sdo_hdr);
+    esc_bool_t   complete_access = EC_COE_SDO_HDR__COMPLETE_ACCESS(&mbx->sdo_hdr);
     esc_uint16_t index           = mbx->sdo_hdr.index;
     esc_uint8_t  sub_index       = mbx->sdo_hdr.sub_index;
     esc_size_t   complete_size   = mbx->complete_size;
@@ -111,20 +111,20 @@ esc_retval_t esc_coe_sdo_download_normal_ind(esc_t *pesc, esc_coe_sdo_download_n
 
     if (abort_code != 0u) {
         mbx->coe_hdr.hdr = 0u;
-        ESC_COE_HDR__SERVICE_SET(&mbx->coe_hdr, ESC_COE_HDR__SERVICE__SDO_REQUEST);
+        EC_COE_HDR__SERVICE_SET(&mbx->coe_hdr, EC_COE_HDR__SERVICE__SDO_REQUEST);
 
         mbx->sdo_hdr.hdr = 0u;
-        ESC_COE_SDO_HDR__COMMAND_SET(&mbx->sdo_hdr, ESC_COE_SDO_HDR__COMMAND__ABORT_REQUEST);
+        EC_COE_SDO_HDR__COMMAND_SET(&mbx->sdo_hdr, EC_COE_SDO_HDR__COMMAND__ABORT_REQUEST);
 
         mbx->sdo_hdr.index = index;
         mbx->sdo_hdr.sub_index = sub_index;
         *(esc_uint32_t *)&mbx->data[0] = abort_code;
     } else {
         mbx->coe_hdr.hdr = 0u;
-        ESC_COE_HDR__SERVICE_SET(&mbx->coe_hdr, ESC_COE_HDR__SERVICE__SDO_RESPONSE);
+        EC_COE_HDR__SERVICE_SET(&mbx->coe_hdr, EC_COE_HDR__SERVICE__SDO_RESPONSE);
 
         mbx->sdo_hdr.hdr = 0u;
-        ESC_COE_SDO_HDR__COMMAND_SET(&mbx->sdo_hdr, ESC_COE_SDO_HDR__COMMAND__DOWNLOAD_RESPONSE);
+        EC_COE_SDO_HDR__COMMAND_SET(&mbx->sdo_hdr, EC_COE_SDO_HDR__COMMAND__DOWNLOAD_RESPONSE);
     }
 
     return ret;
@@ -135,8 +135,8 @@ esc_retval_t esc_coe_sdo_request(esc_t *pesc, esc_coe_sdo_request_t *mbx) {
     assert(pesc != NULL);
     esc_retval_t ret = ESC_OK;
 
-    switch (ESC_COE_SDO_HDR__COMMAND(*mbx)) {
-        case ESC_COE_SDO_HDR__COMMAND__DOWNLOAD_SEGMENT_REQUEST:
+    switch (EC_COE_SDO_HDR__COMMAND(*mbx)) {
+        case EC_COE_SDO_HDR__COMMAND__DOWNLOAD_SEGMENT_REQUEST:
             // #11 | #12
             if (mbx->mailbox_hdr.length < 10) {
                 // #11
@@ -145,9 +145,9 @@ esc_retval_t esc_coe_sdo_request(esc_t *pesc, esc_coe_sdo_request_t *mbx) {
                 // #12
             }
             break;
-        case ESC_COE_SDO_HDR__COMMAND__DOWNLOAD_REQUEST:
+        case EC_COE_SDO_HDR__COMMAND__DOWNLOAD_REQUEST:
             // #7 | #8 | #9 | #10 
-            if (ESC_COE_SDO_HDR__HDR_TRANSFER_TYPE(*mbx) == ESC_COE_SDO_HDR__TRANSFER_TYPE__EXPEDITED) {
+            if (EC_COE_SDO_HDR__HDR_TRANSFER_TYPE(*mbx) == EC_COE_SDO_HDR__TRANSFER_TYPE__EXPEDITED) {
                 // #7 | #8
                 if (mbx->mailbox_hdr.length != 10) {
                     // #7
@@ -166,10 +166,10 @@ esc_retval_t esc_coe_sdo_request(esc_t *pesc, esc_coe_sdo_request_t *mbx) {
                 }
             }
             break;
-        case ESC_COE_SDO_HDR__COMMAND__UPLOAD_REQUEST:
+        case EC_COE_SDO_HDR__COMMAND__UPLOAD_REQUEST:
             // #13 | #14 | #15 | #16
             break;
-        case ESC_COE_SDO_HDR__COMMAND__UPLOAD_SEGMENT_REQUEST:
+        case EC_COE_SDO_HDR__COMMAND__UPLOAD_SEGMENT_REQUEST:
             break;
             // #17 | #18
         default:
@@ -180,21 +180,21 @@ esc_retval_t esc_coe_sdo_request(esc_t *pesc, esc_coe_sdo_request_t *mbx) {
 
     if ( 
             (sd->mailbox_hdr.length != 10) && 
-            (ESC_COE_SDO_HDR__COMMAND(*sdo_hdr) == ESC_COE_SDO_HDR__COMMAND__DOWNLOAD_REQUEST) && 
-            (ESC_COE_SDO_HDR__HDR_TRANSFER_TYPE(*sdo_hdr) == ESC_COE_SDO_HDR__TRANSFER_TYPE__EXPEDITED)     ) 
+            (EC_COE_SDO_HDR__COMMAND(*sdo_hdr) == EC_COE_SDO_HDR__COMMAND__DOWNLOAD_REQUEST) && 
+            (EC_COE_SDO_HDR__HDR_TRANSFER_TYPE(*sdo_hdr) == EC_COE_SDO_HDR__TRANSFER_TYPE__EXPEDITED)     ) 
     {
         // #7
         esc_coe_mailbox_error_reply(pesc, ESC_MBXERR_INVALIDSIZE, (esc_mailbox_error_reply_t *)sd);
     } else if (
             (sd->mailbox_hdr.length == 10) &&
-            (ESC_COE_SDO_HDR__COMMAND(*sdo_hdr) == ESC_COE_SDO_HDR__COMMAND__DOWNLOAD_REQUEST) &&
-            (ESC_COE_SDO_HDR__HDR_TRANSFER_TYPE(*sdo_hdr) == ESC_COE_SDO_HDR__TRANSFER_TYPE__EXPEDITED) ) {
+            (EC_COE_SDO_HDR__COMMAND(*sdo_hdr) == EC_COE_SDO_HDR__COMMAND__DOWNLOAD_REQUEST) &&
+            (EC_COE_SDO_HDR__HDR_TRANSFER_TYPE(*sdo_hdr) == EC_COE_SDO_HDR__TRANSFER_TYPE__EXPEDITED) ) {
         // #8
         // TODO
     } else if (
             (sd->mailbox_hdr.length >= 10) &&
-            (ESC_COE_SDO_HDR__COMMAND(*sdo_hdr) == ESC_COE_SDO_HDR__COMMAND__DOWNLOAD_REQUEST) &&
-            (ESC_COE_SDO_HDR__HDR_TRANSFER_TYPE(*sdo_hdr) == ESC_COE_SDO_HDR__TRANSFER_TYPE__NORMAL)    ) {
+            (EC_COE_SDO_HDR__COMMAND(*sdo_hdr) == EC_COE_SDO_HDR__COMMAND__DOWNLOAD_REQUEST) &&
+            (EC_COE_SDO_HDR__HDR_TRANSFER_TYPE(*sdo_hdr) == EC_COE_SDO_HDR__TRANSFER_TYPE__NORMAL)    ) {
         // #9
         // TODO
     }
@@ -206,9 +206,9 @@ esc_retval_t esc_coe_sdo_info_service_ind(esc_t *pesc, esc_coe_sdo_information_t
     assert(pesc != NULL);
     esc_retval_t ret = ESC_OK;
 
-    switch (ESC_COE_SDO_INFO_HDR__OPCODE(*mbx)) {
-        case ESC_COE_SDO_INFO_HDR__GET_OD_LIST_REQUEST:
-        case ESC_COE_SDO_INFO_HDR__GET_OBJECT_DESCRIPTION_REQUEST:
+    switch (EC_COE_SDO_INFO_HDR__OPCODE(*mbx)) {
+        case EC_COE_SDO_INFO_HDR__GET_OD_LIST_REQUEST:
+        case EC_COE_SDO_INFO_HDR__GET_OBJECT_DESCRIPTION_REQUEST:
             // #19 | #20
             if (mbx->mailbox_hdr.length != 8) {
                 // #19
@@ -218,7 +218,7 @@ esc_retval_t esc_coe_sdo_info_service_ind(esc_t *pesc, esc_coe_sdo_information_t
                 pesc->mailbox.coe.state = MAILBOX_STATE_INF;
             }
             break;
-        case ESC_COE_SDO_INFO_HDR__GET_ENTRY_DESCRIPTION_REQUEST:
+        case EC_COE_SDO_INFO_HDR__GET_ENTRY_DESCRIPTION_REQUEST:
             // #21 | #22
             if (mbx->mailbox_hdr.length != 10) {
                 // #21
@@ -254,13 +254,13 @@ esc_void_t esc_coe_mailbox_write_ind(esc_t *pesc, esc_coe_service_data_t *sd) {
         {
             esc_coe_sdo_hdr_t *sdo_hdr = (esc_coe_sdo_hdr_t *)&sd->data[0];
 
-            switch (ESC_COE_HDR__SERVICE(sd->coe_hdr)) {
-                case ESC_COE_HDR__SERVICE__SDO_REQUEST: {
+            switch (EC_COE_HDR__SERVICE(sd->coe_hdr)) {
+                case EC_COE_HDR__SERVICE__SDO_REQUEST: {
                     // #6 | #7 | #8 | #9 | #10 | #11 | #12 | #13 | #14 | #15 | #16 | #17 | #18
                     esc_coe_sdo_request(pesc, (esc_coe_sdo_request_t *)mbx);
                     break;
                 }
-                case ESC_COE_HDR__SERVICE__SDO_INFORMATION: {
+                case EC_COE_HDR__SERVICE__SDO_INFORMATION: {
                     // #19 | #20 | #21 | #22
                     esc_coe_sdo_info_service_ind(pesc, (esc_coe_sdo_information_t *)mbx);
                     break;
