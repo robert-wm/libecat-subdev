@@ -1,6 +1,6 @@
 #include <libecat-base/types.h>
 #include <libecat-base/regs.h>
-#include <libecat-subdev/esc.h>
+#include <libecat-subdev/ecsd.h>
 
 #include <assert.h>
 #include <stdlib.h>

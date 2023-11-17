@@ -31,8 +31,8 @@
 #ifndef LIBECAT_SUBDEV_MAILBOX_H
 #define LIBECAT_SUBDEV_MAILBOX_H
 
-#include <libecat-subdev/esc.h>
 #include <libecat-base/mailbox.h>
+#include <libecat-subdev/ecsd.h>
 
 #define MAILBOX_STATE_IDLE      1
 #define MAILBOX_STATE_INF       2

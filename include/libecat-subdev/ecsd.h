@@ -1,5 +1,5 @@
 /**
- * \file esc.h
+ * \file ecsd.h
  *
  * \author Robert Burger <robert@burger-system.de>
  *
@@ -55,28 +55,28 @@ struct ecsd {
     ec_bool_t id_flag;
     ec_uint8_t al_control_state;
 
-    ec_bool_t boot_supported;                 //!< \brief Bootstrap mode is supported by slave
-    ec_bool_t dc_not_accepted;                //!< \brief The device does not support DCs and does not accept DC settings,
+    ec_bool_t boot_supported;                   //!< \brief Bootstrap mode is supported by slave
+    ec_bool_t dc_not_accepted;                  //!< \brief The device does not support DCs and does not accept DC settings,
                                                 // either. If DC settings are made the device will go into Error state. This
                                                 // means Sync Control register 0x0981 shall be 0.
-    ec_bool_t dc_required;                    //!< \brief Device requires DC settings (Bits 0x0981:00 to 0x0981:02 shall be set
+    ec_bool_t dc_required;                      //!< \brief Device requires DC settings (Bits 0x0981:00 to 0x0981:02 shall be set
                                                 // accordingly). Other modes such as “Freerun” and “Synchronous with
                                                 // SM event” are not supported
-    ec_bool_t dc_running;                     //!< \brief DCs are running and used for synchronization between master and
+    ec_bool_t dc_running;                       //!< \brief DCs are running and used for synchronization between master and
                                                 // slave application.
-    ec_bool_t dc_supported;                   //!< \brief Device supports at least one OpMode which uses Distributed Clocks
+    ec_bool_t dc_supported;                     //!< \brief Device supports at least one OpMode which uses Distributed Clocks
 
-    ec_uint16_t local_error_code;             //!< \brief Original reason of a previous local error which resulted in disabeling
+    ec_uint16_t local_error_code;               //!< \brief Original reason of a previous local error which resulted in disabeling
                                                 // SyncManager channels
-    ec_bool_t local_error_flag;               //!< \brief Flag of local application indicating a local error causing that
+    ec_bool_t local_error_flag;                 //!< \brief Flag of local application indicating a local error causing that
                                                 // SyncManagers were disabled. Used in case of an error resulting in a
                                                 // state change from Op to SafeOp 
-    ec_bool_t pll_running;                    //!< \brief Local application is synchronized with DC event and master application.
-    ec_uint32_t safeop_2_op_timeout_timer;    //!< \brief Timeout for state change from SafeOp to Op
-    ec_bool_t dc_event_received;              //!< \brief Slave has received the Sync0/Sync1 event at least once
-    ec_bool_t wait_for_pll_running;           //!< \brief Wait until local PLL has locked with master cycle (wait until 
+    ec_bool_t pll_running;                      //!< \brief Local application is synchronized with DC event and master application.
+    ec_uint32_t safeop_2_op_timeout_timer;      //!< \brief Timeout for state change from SafeOp to Op
+    ec_bool_t dc_event_received;                //!< \brief Slave has received the Sync0/Sync1 event at least once
+    ec_bool_t wait_for_pll_running;             //!< \brief Wait until local PLL has locked with master cycle (wait until 
                                                 // pll_running = TRUE). This time shall be smaller than the safeop_2_op_timeout.
-    ec_bool_t wd_enabled;                     //!< \brief The watchdog behavior is disabled if at least the watchdog time (R400,
+    ec_bool_t wd_enabled;                       //!< \brief The watchdog behavior is disabled if at least the watchdog time (R400,
                                                 // R420) is equal zero, additionally the watchdog behavior can be
                                                 // disabled if the watchdog bit of the SyncManager is disabled
                                                 // (SyncManager register +0x04.06=0) (when using the watchdog
@@ -85,15 +85,15 @@ struct ecsd {
                                                 // TRUE: watchdog behaviour is enabled
                                                 // FALSE: watchdog behaviour is disabled
                                                 // If slave has only inputs wdEnabled may always be FALSE
-    ec_bool_t ready_for_op;                   //!< \brief Internal variable which is set when the device is ready to be switched
+    ec_bool_t ready_for_op;                     //!< \brief Internal variable which is set when the device is ready to be switched
                                                 // to OP in Non-DC-Mode, this should happen when the outputs have
                                                 // been received within the watchdog time if enabled or during SafeOp
                                                 // state when the watchdog is disabled. However there can be another
                                                 // behavior due to legacy reasons.
-    ec_bool_t sm_event_received_internal;     //!< \brief Variable which indicates that the SM-event was received
+    ec_bool_t sm_event_received_internal;       //!< \brief Variable which indicates that the SM-event was received
                                             
-    ec_bool_t mbx_supported;                   //!< \brief Flag indicating if mailbox is supported by slave.
-    ec_bool_t mbx_running;                     //!< \brief Flag indicating mailbox is currently running.
+    ec_bool_t mbx_supported;                    //!< \brief Flag indicating if mailbox is supported by slave.
+    ec_bool_t mbx_running;                      //!< \brief Flag indicating mailbox is currently running.
                                                 //
     struct mailbox mbx;
     struct hw hw;

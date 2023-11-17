@@ -33,7 +33,7 @@
 
 #include <stdint.h>
 #include <libecat-subdev/mailbox.h>
-#include <libecat-subdev/esc.h>
+#include <libecat-subdev/ecsd.h>
 #include <libecat-base/types.h>
 #include <libecat-base/coe.h>
 
