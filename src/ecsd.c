@@ -288,7 +288,20 @@ ec_retval_t ecsd_stop_local_output_handler(struct ecsd *pecsd) {
     return EC_OK;
 }
 
-ec_retval_t ecsd_al_control_rsp(struct ecsd *pecsd, ec_uint8_t al_state, ec_uint16_t al_status_code, ec_bool_t al_error_flag, ec_bool_t id_flag) {
+ec_retval_t ecsd_al_control_rsp(struct ecsd *pecsd, ec_uint8_t al_state, 
+        ec_uint16_t al_status_code, ec_bool_t al_error_flag, ec_bool_t id_flag) 
+{
+    ec_uint16_t al_status = 0u;
+    EC_REG_AL_STATUS__STATE__SET(al_status, al_state);
+    EC_REG_AL_STATUS__ERROR_IND__SET(al_status, al_error_flag);
+    EC_REG_AL_STATUS__ID__SET(al_status, id_flag);
+
+    if (al_error_flag == EC_TRUE) {
+        hw_write(pecsd, EC_REG_AL_STATUS_CODE, (ec_uint8_t *)&al_status_code, sizeof(al_status_code));
+    }
+
+    hw_write(pecsd, EC_REG_AL_STATUS, (ec_uint8_t *)&al_status, sizeof(al_status));
+
     return EC_OK;
 }
 
