@@ -306,6 +306,15 @@ ec_void_t ecsd_start_safeop_2_op_timeout_timer(struct ecsd *pecsd) {
 ec_void_t ecsd_ack_sm_chg(struct ecsd *pecsd) {
 }
 
+//! \brief AL control indication
+/*!
+ * \param[in]   pecsd               Pointer to EtherCAT SubDevice structure.
+ * \param[in]   al_control_state    Requested AL control state.
+ * \param[in]   ack_flag            Requested error ack flag.
+ * \param[in]   id_request          Request identification.
+ *
+ * \retval EC_OK    On success.
+ */
 ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state, ec_bool_t ack_flag, ec_bool_t id_request) 
 {
     ec_retval_t retval = EC_OK;
