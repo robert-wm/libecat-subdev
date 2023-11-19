@@ -34,7 +34,48 @@
 #include <stdint.h>
 #include <libecat-base/types.h>
 
+#define EC_REG_AL_CONTROL                                           ((ec_uint16_t)0x0120u)
+
+#define EC_REG_AL_CONTROL__STATE__MASK                              ((ec_uint16_t)0x000Fu)
+#define EC_REG_AL_CONTROL__STATE__SHIFT                             ((ec_uint8_t)0x0000u)
+#define EC_REG_AL_CONTROL__STATE(reg)                               (((reg) & EC_REG_AL_CONTROL__STATE__MASK) >> EC_REG_AL_CONTROL__STATE__SHIFT)
+#define EC_REG_AL_CONTROL__STATE__SET(reg, val)                     (reg) = ((reg) & ~EC_REG_AL_CONTROL__STATE__MASK) | \
+                                                                        (((val) << EC_REG_AL_EVENT_REQUEST__STATE__SHIFT) & EC_REG_AL_EVENT_REQUEST__STATE__MASK)
+
+#define EC_REG_AL_CONTROL__ERROR_IND_ACK__MASK                      ((ec_uint16_t)0x0010u)
+#define EC_REG_AL_CONTROL__ERROR_IND_ACK__SHIFT                     ((ec_uint8_t)0x0004u)
+#define EC_REG_AL_CONTROL__ERROR_IND_ACK(reg)                       (((reg) & EC_REG_AL_CONTROL__ERROR_IND_ACK__MASK) >> EC_REG_AL_CONTROL__ERROR_IND_ACK__SHIFT)
+#define EC_REG_AL_CONTROL__ERROR_IND_ACK__SET(reg, val)             (reg) = ((reg) & ~EC_REG_AL_CONTROL__ERROR_IND_ACK__MASK) | \
+                                                                        (((val) << EC_REG_AL_EVENT_REQUEST__ERROR_IND_ACK__SHIFT) & EC_REG_AL_EVENT_REQUEST__ERROR_IND_ACK__MASK)
+
+#define EC_REG_AL_CONTROL__ID_REQUEST__MASK                         ((ec_uint16_t)0x0020u)
+#define EC_REG_AL_CONTROL__ID_REQUEST__SHIFT                        ((ec_uint8_t)0x0005u)
+#define EC_REG_AL_CONTROL__ID_REQUEST(reg)                          (((reg) & EC_REG_AL_CONTROL__ID_REQUEST__MASK) >> EC_REG_AL_CONTROL__ID_REQUEST__SHIFT)
+#define EC_REG_AL_CONTROL__ID_REQUEST__SET(reg, val)                (reg) = ((reg) & ~EC_REG_AL_CONTROL__ID_REQUEST__MASK) | \
+                                                                        (((val) << EC_REG_AL_EVENT_REQUEST__ID_REQUEST__SHIFT) & EC_REG_AL_EVENT_REQUEST__ID_REQUEST__MASK)
+
+
 #define EC_REG_AL_STATUS                                            ((ec_uint16_t)0x0130u)
+
+#define EC_REG_AL_STATUS__STATE__MASK                               ((ec_uint16_t)0x000Fu)
+#define EC_REG_AL_STATUS__STATE__SHIFT                              ((ec_uint8_t)0x0000u)
+#define EC_REG_AL_STATUS__STATE(reg)                                (((reg) & EC_REG_AL_STATUS__STATE__MASK) >> EC_REG_AL_STATUS__STATE__SHIFT)
+#define EC_REG_AL_STATUS__STATE__SET(reg, val)                      (reg) = ((reg) & ~EC_REG_AL_STATUS__STATE__MASK) | \
+                                                                        (((val) << EC_REG_AL_STATUS__STATE__SHIFT) & EC_REG_AL_STATUS__STATE__MASK)
+
+#define EC_REG_AL_STATUS__ERROR_IND__MASK                           ((ec_uint16_t)0x0010u)
+#define EC_REG_AL_STATUS__ERROR_IND__SHIFT                          ((ec_uint8_t)0x0004u)
+#define EC_REG_AL_STATUS__ERROR_IND(reg)                            (((reg) & EC_REG_AL_STATUS__ERROR_IND__MASK) >> EC_REG_AL_STATUS__ERROR_IND__SHIFT)
+#define EC_REG_AL_STATUS__ERROR_IND__SET(reg, val)                  (reg) = ((reg) & ~EC_REG_AL_STATUS__ERROR_IND__MASK) | \
+                                                                        (((val) << EC_REG_AL_STATUS__ERROR_IND__SHIFT) & EC_REG_AL_STATUS__ERROR_IND__MASK)
+
+#define EC_REG_AL_STATUS__ID__MASK                                  ((ec_uint16_t)0x0020u)
+#define EC_REG_AL_STATUS__ID__SHIFT                                 ((ec_uint8_t)0x0005u)
+#define EC_REG_AL_STATUS__ID(reg)                                   (((reg) & EC_REG_AL_STATUS__ID__MASK) >> EC_REG_AL_STATUS__ID__SHIFT)
+#define EC_REG_AL_STATUS__ID__SET(reg, val)                         (reg) = ((reg) & ~EC_REG_AL_STATUS__ID__MASK) | \
+                                                                        (((val) << EC_REG_AL_STATUS__ID__SHIFT) & EC_REG_AL_STATUS__ID__MASK)
+
+
 #define EC_REG_AL_STATUS_CODE                                       ((ec_uint16_t)0x0134u)
 #define EC_REG_PDI_CONTROL                                          ((ec_uint16_t)0x0140u)
 
