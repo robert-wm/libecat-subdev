@@ -35,6 +35,41 @@
 #include <libecat-subdev/ecsd.h>
 #include <libecat-subdev/hw.h>
 
+//! \brief Opens and initializes EtherCAT SubDev
+/*!
+ * \param[in]   pesc        Pointer to ECSD struture.
+ * \param[in]   ecsd_base   Base address of ECSD memory.
+ * \param[in]   pdi_type    Type of PDI waiting for ECSD to become ready.
+ *
+ * \retval  OK on success.
+ */
+ec_void_t ecsd_open(struct ecsd *pecsd, void *ecsd_base, ec_uint16_t pdi_type) {
+    hw_open(pecsd, ecsd_base, pdi_type);
+
+    pecsd->al_state                    = EC_STATE_INIT;
+    pecsd->al_error_flag               = EC_FALSE;
+    pecsd->al_status_code              = 0u;
+    pecsd->id_flag                     = EC_FALSE;;
+    pecsd->al_control_state            = 0u;;
+
+    pecsd->boot_supported              = EC_FALSE;
+    pecsd->dc_not_accepted             = EC_FALSE;
+    pecsd->dc_required                 = EC_FALSE;
+    pecsd->dc_running                  = EC_FALSE;
+    pecsd->dc_supported                = EC_FALSE;
+    pecsd->local_error_code            = 0u;
+    pecsd->local_error_flag            = EC_FALSE;
+    pecsd->pll_running                 = EC_FALSE;
+    pecsd->safeop_2_op_timeout_timer   = 0u;
+    pecsd->dc_event_received           = EC_FALSE;
+    pecsd->wait_for_pll_running        = EC_FALSE;
+    pecsd->wd_enabled                  = EC_FALSE;
+    pecsd->ready_for_op                = EC_FALSE;
+    pecsd->sm_event_received_internal  = EC_FALSE;
+    pecsd->mbx_supported               = EC_FALSE;
+    pecsd->mbx_running                 = EC_FALSE;
+}
+
 ec_retval_t ecsd_al_state_change_req(struct ecsd *pecsd, ec_uint8_t al_state, ec_uint16_t al_status_code);
 
 ec_bool_t ecsd_sm_settings_0_and_1_match(struct ecsd *pecsd) {
