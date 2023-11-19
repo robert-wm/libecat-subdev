@@ -98,7 +98,35 @@ struct ecsd {
     struct mailbox mbx;
     struct hw hw;
 };
+
+//! \brief Opens and initializes EtherCAT SubDev
+/*!
+ * \param[in]   pesc        Pointer to ECSD struture.
+ * \param[in]   ecsd_base   Base address of ECSD memory.
+ * \param[in]   pdi_type    Type of PDI waiting for ECSD to become ready.
+ *
+ * \retval  OK on success.
+ */
+ec_void_t ecsd_open(struct ecsd *pecsd, void *ecsd_base, ec_uint16_t pdi_type);
             
+//! \brief AL control indication
+/*!
+ * \param[in]   pecsd               Pointer to EtherCAT SubDevice structure.
+ * \param[in]   al_control_state    Requested AL control state.
+ * \param[in]   ack_flag            Requested error ack flag.
+ * \param[in]   id_request          Request identification.
+ *
+ * \retval EC_OK    On success.
+ */
+ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state, 
+        ec_bool_t ack_flag, ec_bool_t id_request);
+
+//! \brief Sync manager change event occured
+/*!
+ * \param[in]   pecsd        Pointer to ESC struture.
+ */
+ec_void_t ecsd_sm_chg(struct ecsd *pecsd);
+
 ec_void_t ecsd_sync0(struct ecsd *pecsd);
 ec_void_t ecsd_sync1(struct ecsd *pecsd);
 ec_void_t ecsd_pdo(struct ecsd *pecsd);

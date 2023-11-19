@@ -983,3 +983,15 @@ ec_retval_t ecsd_al_state_change_req(struct ecsd *pecsd, ec_uint8_t al_state, ec
     return EC_OK;
 }
 
+ec_void_t ecsd_sync0(struct ecsd *pecsd) {
+}
+
+ec_void_t ecsd_sync1(struct ecsd *pecsd) {
+}
+
+ec_void_t ecsd_pdo(struct ecsd *pecsd) {
+}
+
+ec_void_t ecsd_pdi(struct ecsd *pecsd) {
+}
+

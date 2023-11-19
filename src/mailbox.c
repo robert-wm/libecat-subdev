@@ -58,7 +58,6 @@ ec_uint32_t esc_mailbox_read_upd_cnf(struct ecsd *pecsd, ec_bool_t success) {
     return ret;
 }
 
-
 ec_uint32_t esc_mailbox_written(struct ecsd *pecsd) {
     ec_uint32_t ret = 0u;
 
@@ -90,4 +89,8 @@ ec_uint32_t esc_mailbox_written(struct ecsd *pecsd) {
     }
 
     return ret;
+}
+
+ec_retval_t ecsd_mbx_write(struct ecsd *pesc, struct ec_mailbox *mbx) {
+    return 0;
 }
