@@ -54,7 +54,10 @@ ec_retval_t ecsd_coe_abort_sdo_transfer_req(struct ecsd *pecsd, struct ec_coe_ab
     return 0;
 }
 
-ec_retval_t ecsd_coe_sdo_download_expedited_ind(struct ecsd *pecsd, struct ec_coe_sdo_download_expedited *mbx) {
+// ===================================================================
+// Primitives issued by CoESM to Application (see ETG1000.6 Table 109)
+
+ec_retval_t ecsd_coe_sdo_download_expedited_ind(struct ecsd *pecsd, struct ec_coe_sdo_download_expedited_req *mbx) {
     assert(pecsd != NULL);
     ec_retval_t ret = EC_OK;
     ec_uint32_t abort_code = 0u;
@@ -99,7 +102,7 @@ ec_retval_t ecsd_coe_sdo_download_expedited_ind(struct ecsd *pecsd, struct ec_co
     return ret;
 }
 
-ec_retval_t ecsd_coe_sdo_download_normal_ind(struct ecsd *pecsd, struct ec_coe_sdo_download_normal *mbx) {
+ec_retval_t ecsd_coe_sdo_download_normal_ind(struct ecsd *pecsd, struct ec_coe_sdo_download_normal_req *mbx) {
     assert(pecsd != NULL);
     ec_retval_t ret = EC_OK;
     ec_uint32_t abort_code = 0u;
@@ -144,6 +147,25 @@ ec_retval_t ecsd_coe_sdo_download_normal_ind(struct ecsd *pecsd, struct ec_coe_s
     return ret;
 }
 
+ec_retval_t ecsd_coe_download_sdo_segment_ind(struct ecsd *pecsd, struct ec_coe_sdo_download_segmented_req *mbx) {
+    assert(pecsd != NULL);
+    ec_retval_t ret = EC_OK;
+    return ret;
+}
+
+ec_retval_t ecsd_coe_sdo_upload_expedited_ind(struct ecsd *pecsd, struct ec_coe_sdo_upload_expedited_req *mbx) {
+    assert(pecsd != NULL);
+    ec_retval_t ret = EC_OK;
+    return ret;
+}
+
+ec_retval_t ecsd_coe_sdo_upload_normal_ind(struct ecsd *pecsd, struct ec_coe_sdo_upload_normal_req *mbx) {
+    assert(pecsd != NULL);
+    ec_retval_t ret = EC_OK;
+    return ret;
+}
+
+// ===================================================================
 
 ec_retval_t ecsd_coe_sdo_request(struct ecsd *pecsd, struct ec_coe_sdo_request *mbx) {
     assert(pecsd != NULL);
@@ -168,7 +190,7 @@ ec_retval_t ecsd_coe_sdo_request(struct ecsd *pecsd, struct ec_coe_sdo_request *
                     ecsd_coe_mailbox_error_reply(pecsd, EC_MBXERR_INVALIDSIZE, (struct ec_mailbox_error_reply *)mbx);
                 } else {
                     // #8
-                    ecsd_coe_sdo_download_expedited_ind(pecsd, (struct ec_coe_sdo_download_expedited *)mbx);
+                    ecsd_coe_sdo_download_expedited_ind(pecsd, (struct ec_coe_sdo_download_expedited_req *)mbx);
                 }
             } else {
                 // #9 | #10
@@ -240,7 +262,22 @@ ec_void_t ecsd_coe_mailbox_error_reply(struct ecsd *pecsd, ec_uint8_t detail, st
     pecsd->mbx.coe.state = MAILBOX_STATE_ERR;
 }
 
-ec_void_t ecsd_coe_mailbox_write_ind(struct ecsd *pecsd, struct ec_coe_service_data *mbx) {
+//! \brief 
+/*!
+ * Refer to Mailbox Read Upd Service Definition ETG.1000.3
+ */
+ec_retval_t ecsd_coe_mailbox_read_upd(struct ecsd *pecsd, struct ec_mailbox *mbx) {
+    assert (pecsd != NULL);
+    ec_retval_t ret = 0u;
+
+    return ret;
+}
+
+//! \brief 
+/*!
+ * Refer to Service Definition ETG.1000.3
+ */
+ec_retval_t ecsd_coe_mailbox_write_ind(struct ecsd *pecsd, struct ec_coe_service_data *mbx) {
     assert(pecsd != NULL);
 
     switch (pecsd->mbx.coe.state) {
@@ -267,4 +304,18 @@ ec_void_t ecsd_coe_mailbox_write_ind(struct ecsd *pecsd, struct ec_coe_service_d
             break;
         }
     }
+
+    return 0;
 }
+
+//! \brief 
+/*!
+ * Refer to Service Definition ETG.1000.3
+ */
+ec_retval_t esc_coe_mailbox_read_upd_cnf(struct ecsd *pecsd, ec_bool_t success) {
+    assert (pecsd != NULL);
+    ec_retval_t ret = 0u;
+
+    return ret;
+}
+

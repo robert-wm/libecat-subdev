@@ -5,9 +5,9 @@
  *
  * \date 25 Oct 2023
  *
- * \brief ESC main header.
+ * \brief ECSD main header.
  *
- * ESC main header.
+ * ECSD main header.
  */
 
 /*
@@ -80,7 +80,7 @@ struct ecsd {
                                                 // R420) is equal zero, additionally the watchdog behavior can be
                                                 // disabled if the watchdog bit of the SyncManager is disabled
                                                 // (SyncManager register +0x04.06=0) (when using the watchdog
-                                                // functionality of the ESC, this watchdog is only enabled if the watchdog
+                                                // functionality of the ECSD, this watchdog is only enabled if the watchdog
                                                 // bit in the Sync Manager is set)
                                                 // TRUE: watchdog behaviour is enabled
                                                 // FALSE: watchdog behaviour is disabled
@@ -101,7 +101,7 @@ struct ecsd {
 
 //! \brief Opens and initializes EtherCAT SubDev
 /*!
- * \param[in]   pesc        Pointer to ECSD struture.
+ * \param[in]   pecsd       Pointer to ECSD struture.
  * \param[in]   ecsd_base   Base address of ECSD memory.
  * \param[in]   pdi_type    Type of PDI waiting for ECSD to become ready.
  *
@@ -123,7 +123,7 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
 
 //! \brief Sync manager change event occured
 /*!
- * \param[in]   pecsd        Pointer to ESC struture.
+ * \param[in]   pecsd        Pointer to ECSD struture.
  */
 ec_void_t ecsd_sm_chg(struct ecsd *pecsd);
 

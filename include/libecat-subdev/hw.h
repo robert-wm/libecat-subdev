@@ -5,9 +5,9 @@
  *
  * \date 25 Oct 2023
  *
- * \brief ESC hardware header.
+ * \brief ECSD hardware header.
  *
- * ESC hardware header.
+ * ECSD hardware header.
  */
 
 /*
@@ -43,10 +43,10 @@ struct hw {
     ec_bool_t sync1_mapped_to_al_status;
 };
 
-//! \brief copy bytes from ESC memory to local memory
+//! \brief copy bytes from ECSD memory to local memory
 /*!
- * \param[in]   pesc        Pointer to ESC struture.
- * \param[in]   adr         ESC memory address to copy from.
+ * \param[in]   pecsd        Pointer to ECSD struture.
+ * \param[in]   adr         ECSD memory address to copy from.
  * \param[out]  buf         Target buffer to copy to.
  * \param[in]   buf_len     Length of target buffer.
  *
@@ -54,10 +54,10 @@ struct hw {
  */
 ec_size_t hw_read(struct ecsd *pecsd, ec_off_t adr, ec_uint8_t *buf, ec_size_t buf_len);
 
-//! \brief copy bytes from local memory to ESC memory
+//! \brief copy bytes from local memory to ECSD memory
 /*!
- * \param[in]   pesc        Pointer to ESC struture.
- * \param[in]   adr         ESC memory address to copy to.
+ * \param[in]   pecsd        Pointer to ECSD struture.
+ * \param[in]   adr         ECSD memory address to copy to.
  * \param[in]   buf         Target buffer to copy from.
  * \param[in]   buf_len     Length of target buffer.
  *
@@ -65,11 +65,11 @@ ec_size_t hw_read(struct ecsd *pecsd, ec_off_t adr, ec_uint8_t *buf, ec_size_t b
  */
 ec_size_t hw_write(struct ecsd *pecsd, ec_off_t adr, ec_uint8_t *buf, ec_size_t buf_len);
 
-//! \brief Opens and initializes ESC hardware
+//! \brief Opens and initializes ECSD hardware
 /*!
- * \param[in]   pesc        Pointer to ESC struture.
- * \param[in]   ecsd_base    Base address of ESC memory.
- * \param[in]   pdi_type    Type of PDI waiting for ESC to become ready.
+ * \param[in]   pecsd        Pointer to ECSD struture.
+ * \param[in]   ecsd_base    Base address of ECSD memory.
+ * \param[in]   pdi_type    Type of PDI waiting for ECSD to become ready.
  *
  * \retval  OK on success.
  */

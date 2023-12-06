@@ -40,9 +40,9 @@
 /*!
  * Refer to Service Definition ETG.1000.3
  */
-ec_uint32_t esc_mailbox_write_ind(struct ecsd *pecsd, struct ec_mailbox *mbx) {
+ec_retval_t esc_mailbox_write_ind(struct ecsd *pecsd, struct ec_mailbox *mbx) {
     assert (pecsd != NULL);
-    ec_uint32_t ret = 0u;
+    ec_retval_t ret = 0u;
 
     return ret;
 }
@@ -51,9 +51,9 @@ ec_uint32_t esc_mailbox_write_ind(struct ecsd *pecsd, struct ec_mailbox *mbx) {
 /*!
  * Refer to Service Definition ETG.1000.3
  */
-ec_uint32_t esc_mailbox_read_upd_cnf(struct ecsd *pecsd, ec_bool_t success) {
+ec_retval_t esc_mailbox_read_upd_cnf(struct ecsd *pecsd, ec_bool_t success) {
     assert (pecsd != NULL);
-    ec_uint32_t ret = 0u;
+    ec_retval_t ret = 0u;
 
     return ret;
 }

@@ -5,9 +5,9 @@
  *
  * \date 15 Nov 2023
  *
- * \brief ESC CoE header.
+ * \brief ECSD CoE header.
  *
- * ESC CoE header.
+ * ECSD CoE header.
  */
 
 /*
@@ -37,33 +37,51 @@
 #include <libecat-base/types.h>
 #include <libecat-base/coe.h>
 
+//! \brief 
+/*!
+ * Refer to Mailbox Read Upd Service Definition ETG.1000.3
+ */
+ec_retval_t ecsd_coe_mailbox_read_upd(struct ecsd *pecsd, struct ec_mailbox *mbx);
+
+//! \brief 
+/*!
+ * Refer to Service Definition ETG.1000.3
+ */
+ec_retval_t ecsd_coe_mailbox_write_ind(struct ecsd *pecsd, struct ec_coe_service_data *mbx);
+
+//! \brief 
+/*!
+ * Refer to Service Definition ETG.1000.3
+ */
+ec_retval_t ecsd_coe_mailbox_read_upd_cnf(struct ecsd *pecsd, ec_bool_t success);
+
 //! \brief CoE SDO download expedited indication.
 /*!
  * \param[in]   pecsd        Pointer to EtherCAT SubDevice structure.
  * \param[in]   mbx         Mailbox message to process.
  */
-ec_retval_t ecsd_coe_sdo_download_expedited_ind(struct ecsd *pecsd, struct ec_coe_sdo_download_expedited *mbx);
+ec_retval_t ecsd_coe_sdo_download_expedited_ind(struct ecsd *pecsd, struct ec_coe_sdo_download_expedited_req *mbx);
 
 //! \brief CoE SDO download normal indication.
 /*!
  * \param[in]   pecsd        Pointer to EtherCAT SubDevice structure.
  * \param[in]   mbx         Mailbox message to process.
  */
-ec_retval_t ecsd_coe_sdo_download_normal_ind(struct ecsd *pecsd, struct ec_coe_sdo_download_normal *mbx);
+ec_retval_t ecsd_coe_sdo_download_normal_ind(struct ecsd *pecsd, struct ec_coe_sdo_download_normal_req *mbx);
 
 //! \brief CoE SDO download segment indication.
 /*!
  * \param[in]   pecsd        Pointer to EtherCAT SubDevice structure.
  * \param[in]   mbx         Mailbox message to process.
  */
-ec_retval_t ecsd_coe_download_sdo_segment_ind(struct ecsd *pecsd, ec_uint16_t address, ec_bool_t toggle, ec_bool_t more_follows, ec_size_t size, ec_uint8_t *data);
+ec_retval_t ecsd_coe_download_sdo_segment_ind(struct ecsd *pecsd, struct ec_coe_sdo_download_segmented_req *mbx);
 
 //! \brief CoE SDO upload expedited indication.
 /*!
  * \param[in]   pecsd        Pointer to EtherCAT SubDevice structure.
  * \param[in]   mbx         Mailbox message to process.
  */
-ec_retval_t ecsd_coe_sdo_upload_expedited_ind(struct ecsd *pecsd, ec_uint16_t address, ec_uint16_t index, ec_uint8_t sub_index);
+ec_retval_t ecsd_coe_sdo_upload_expedited_ind(struct ecsd *pecsd, struct ec_coe_sdo_upload_expedited_req *mbx);
 
 #endif // LIBECAT_SUBDEV_COE_H
 

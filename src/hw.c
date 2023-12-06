@@ -1,5 +1,6 @@
 #include <libecat-base/types.h>
 #include <libecat-base/regs.h>
+#include <libecat-base/common.h>
 #include <libecat-subdev/ecsd.h>
 
 #include <assert.h>
@@ -59,6 +60,8 @@ ec_uint32_t hw_open(struct ecsd *pecsd, void *ecsd_base, ec_uint16_t pdi_type) {
     do {
         hw_read(pecsd, EC_REG_PDI_CONTROL, (ec_uint8_t *)&pdi, sizeof(pdi));
     } while (pdi != pdi_type);
+
+    ec_log(10, __func__, "PDI Type did match, hardware opened successfully!\n");
 
     return 0;
 }

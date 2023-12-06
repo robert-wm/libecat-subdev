@@ -5,9 +5,9 @@
  *
  * \date 25 Oct 2023
  *
- * \brief ESC mailbox header.
+ * \brief ECSD mailbox header.
  *
- * ESC mailbox header.
+ * ECSD mailbox header.
  */
 
 /*
@@ -38,7 +38,25 @@
 #define MAILBOX_STATE_INF       2
 #define MAILBOX_STATE_ERR       3
 
-ec_retval_t ecsd_mbx_write(struct ecsd *pesc, struct ec_mailbox *mbx);
+ec_retval_t ecsd_mbx_write(struct ecsd *pecsd, struct ec_mailbox *mbx);
+
+//! \brief 
+/*!
+ * Refer to Service Definition ETG.1000.3
+ */
+ec_retval_t ecsd_mailbox_read_upd(struct ecsd *pecsd, struct ec_mailbox *mbx);
+
+//! \brief 
+/*!
+ * Refer to Service Definition ETG.1000.3
+ */
+ec_retval_t ecsd_mailbox_write_ind(struct ecsd *pecsd, struct ec_mailbox *mbx);
+
+//! \brief 
+/*!
+ * Refer to Service Definition ETG.1000.3
+ */
+ec_retval_t ecsd_mailbox_read_upd_cnf(struct ecsd *pecsd, ec_bool_t success);
 
 #endif // LIBECAT_SUBDEV_MAILBOX_H
 
