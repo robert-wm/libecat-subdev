@@ -223,7 +223,7 @@ ec_retval_t ecsd_coe_sdo_info_service_ind(struct ecsd *pecsd, struct ec_coe_sdo_
 
     switch (EC_COE_SDO_INFO_HDR__OPCODE(&mbx->sdo_hdr)) {
         case EC_COE_SDO_INFO_HDR__GET_OD_LIST_REQUEST:
-        case EC_COE_SDO_INFO_HDR__GET_OBJECT_DESCRIPTION_REQUEST:
+        case EC_COE_SDO_INFO_HDR__GET_OBJECT_DESCRIPTION_REQUEST: {
             // #19 | #20
             if (mbx->mailbox_hdr.length != 8) {
                 // #19
@@ -233,7 +233,8 @@ ec_retval_t ecsd_coe_sdo_info_service_ind(struct ecsd *pecsd, struct ec_coe_sdo_
                 pecsd->mbx.coe.state = MAILBOX_STATE_INF;
             }
             break;
-        case EC_COE_SDO_INFO_HDR__GET_ENTRY_DESCRIPTION_REQUEST:
+        }
+        case EC_COE_SDO_INFO_HDR__GET_ENTRY_DESCRIPTION_REQUEST: {
             // #21 | #22
             if (mbx->mailbox_hdr.length != 10) {
                 // #21
@@ -243,8 +244,10 @@ ec_retval_t ecsd_coe_sdo_info_service_ind(struct ecsd *pecsd, struct ec_coe_sdo_
                 pecsd->mbx.coe.state = MAILBOX_STATE_INF;
             }
             break;
-        default:
+        }
+        default: {
             break;
+        }
     }
 
     return ret;
