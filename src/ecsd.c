@@ -204,7 +204,7 @@ ec_bool_t ecsd_start_mbx_handler(struct ecsd *pecsd) {
     return ret;
 }
 
-//! \brief Start mailbox handling.
+//! \brief Stop mailbox handling.
 /*!
  * \param[in]   pecsd        Pointer to ESC struture.
  */
