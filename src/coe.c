@@ -46,7 +46,7 @@ ec_retval_t ecsd_coe_abort_sdo_transfer_req(struct ecsd *pecsd, struct ec_coe_ab
     EC_COE_HDR__SERVICE__SET(&mbx->coe_hdr, EC_COE_HDR__SERVICE__SDO_REQUEST);
     
     // sdo header
-    EC_COE_SDO_HDR__COMMAND__SET(&mbx->sdo_hdr, EC_COE_SDO_HDR__COMMAND__ABORT_REQUEST);
+    EC_COE_SDO_HDR__COMMAND__SET(mbx->sdo_hdr, EC_COE_SDO_HDR__COMMAND__ABORT_REQUEST);
     mbx->abort_code = abort_code;
 
     ecsd_mbx_write(pecsd, (struct ec_mailbox *)mbx);
@@ -66,7 +66,7 @@ ec_retval_t ecsd_coe_sdo_download_expedited_ind(struct ecsd *pecsd, struct ec_co
     ec_bool_t   complete_access = EC_COE_SDO_HDR__COMPLETE_ACCESS(&mbx->sdo_hdr);
     ec_uint16_t index           = mbx->sdo_hdr.index;
     ec_uint8_t  sub_index       = mbx->sdo_hdr.sub_index;
-    ec_size_t   data_set_size   = 4u - EC_COE_SDO_HDR__DATA_SET_SIZE(&mbx->sdo_hdr);
+    ec_size_t   data_set_size   = 4u - EC_COE_SDO_HDR__DATA_SET_SIZE(mbx->sdo_hdr);
     ec_uint8_t *data            = &mbx->data[0];
 
     obj = ec_obj_get_object(pecsd->mbx.coe.objects, index);
@@ -97,7 +97,7 @@ ec_retval_t ecsd_coe_sdo_download_expedited_ind(struct ecsd *pecsd, struct ec_co
     EC_COE_HDR__SERVICE__SET(&mbx->coe_hdr, EC_COE_HDR__SERVICE__SDO_RESPONSE);
     
     mbx->sdo_hdr.hdr = 0u;
-    EC_COE_SDO_HDR__COMMAND__SET(&mbx->sdo_hdr, EC_COE_SDO_HDR__COMMAND__DOWNLOAD_RESPONSE);
+    EC_COE_SDO_HDR__COMMAND__SET(mbx->sdo_hdr, EC_COE_SDO_HDR__COMMAND__DOWNLOAD_RESPONSE);
 
     return ret;
 }
@@ -142,7 +142,7 @@ ec_retval_t ecsd_coe_sdo_download_normal_ind(struct ecsd *pecsd, struct ec_coe_s
     EC_COE_HDR__SERVICE__SET(&mbx->coe_hdr, EC_COE_HDR__SERVICE__SDO_RESPONSE);
     
     mbx->sdo_hdr.hdr = 0u;
-    EC_COE_SDO_HDR__COMMAND__SET(&mbx->sdo_hdr, EC_COE_SDO_HDR__COMMAND__DOWNLOAD_RESPONSE);
+    EC_COE_SDO_HDR__COMMAND__SET(mbx->sdo_hdr, EC_COE_SDO_HDR__COMMAND__DOWNLOAD_RESPONSE);
 
     return ret;
 }
@@ -171,17 +171,19 @@ ec_retval_t ecsd_coe_sdo_request(struct ecsd *pecsd, struct ec_coe_sdo_request *
     assert(pecsd != NULL);
     ec_retval_t ret = EC_OK;
 
-    switch (EC_COE_SDO_HDR__COMMAND(&mbx->sdo_hdr)) {
-        case EC_COE_SDO_HDR__COMMAND__DOWNLOAD_SEGMENT_REQUEST:
+    switch (EC_COE_SDO_HDR__COMMAND(mbx->sdo_hdr)) {
+        case EC_COE_SDO_HDR__COMMAND__DOWNLOAD_SEGMENT_REQUEST: {
             // #11 | #12
             if (mbx->mailbox_hdr.length < 10) {
                 // #11
                 ecsd_coe_mailbox_error_reply(pecsd, EC_MBXERR_INVALIDSIZE, (struct ec_mailbox_error_reply *)mbx);
+                pecsd->mbx.coe.state = COE_STATE_ERR;
             } else {
                 // #12
             }
             break;
-        case EC_COE_SDO_HDR__COMMAND__DOWNLOAD_REQUEST:
+        }
+        case EC_COE_SDO_HDR__COMMAND__DOWNLOAD_REQUEST: {
             // #7 | #8 | #9 | #10 
             if (EC_COE_SDO_HDR__HDR_TRANSFER_TYPE(&mbx->sdo_hdr) == EC_COE_SDO_HDR__TRANSFER_TYPE__EXPEDITED) {
                 // #7 | #8
@@ -197,21 +199,29 @@ ec_retval_t ecsd_coe_sdo_request(struct ecsd *pecsd, struct ec_coe_sdo_request *
                 if (mbx->mailbox_hdr.length <= 10) {
                     // #9
                     ecsd_coe_mailbox_error_reply(pecsd, EC_MBXERR_INVALIDSIZE, (struct ec_mailbox_error_reply *)mbx);
+                    pecsd->mbx.coe.state = COE_STATE_ERR;
                 } else {
                     // #10
+                    ecsd_coe_sdo_download_normal_ind(pecsd, (struct ec_coe_sdo_download_normal_req *)mbx);
                 }
             }
             break;
-        case EC_COE_SDO_HDR__COMMAND__UPLOAD_REQUEST:
+        }
+        case EC_COE_SDO_HDR__COMMAND__UPLOAD_REQUEST: {
             // #13 | #14 | #15 | #16
             break;
-        case EC_COE_SDO_HDR__COMMAND__UPLOAD_SEGMENT_REQUEST:
-            break;
+        }
+        case EC_COE_SDO_HDR__COMMAND__UPLOAD_SEGMENT_REQUEST: {
             // #17 | #18
-        default:
+            break;
+        }
+        case EC_COE_SDO_HDR__COMMAND__ABORT_REQUEST:
+        default: {
             // #6
             ecsd_coe_mailbox_error_reply(pecsd, EC_MBXERR_INVALIDHEADER, (struct ec_mailbox_error_reply *)mbx);
+            pecsd->mbx.coe.state = MAILBOX_STATE_ERR;
             break;
+        }
     }
 
     return ret;
@@ -270,6 +280,22 @@ ec_retval_t ecsd_coe_mailbox_read_upd(struct ecsd *pecsd, struct ec_mailbox *mbx
     assert (pecsd != NULL);
     ec_retval_t ret = 0u;
 
+    switch (pecsd->mbx.coe.state) {
+        case COE_STATE_ERR: {
+            // #71
+            pecsd->mbx.coe.state = COE_STATE_IDLE;
+            break;
+        }
+        case COE_STATE_WUPD: {
+            // #63 | #64 | #65 | #66 | #67 
+            // TODO
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+
     return ret;
 }
 
@@ -280,8 +306,10 @@ ec_retval_t ecsd_coe_mailbox_read_upd(struct ecsd *pecsd, struct ec_mailbox *mbx
 ec_retval_t ecsd_coe_mailbox_write_ind(struct ecsd *pecsd, struct ec_coe_service_data *mbx) {
     assert(pecsd != NULL);
 
+    ec_retval_t ret = 0;
+
     switch (pecsd->mbx.coe.state) {
-        case MAILBOX_STATE_IDLE: 
+        case COE_STATE_IDLE: 
         {
             switch (EC_COE_HDR__SERVICE(mbx->coe_hdr)) {
                 case EC_COE_HDR__SERVICE__SDO_REQUEST: {
@@ -312,10 +340,79 @@ ec_retval_t ecsd_coe_mailbox_write_ind(struct ecsd *pecsd, struct ec_coe_service
 /*!
  * Refer to Service Definition ETG.1000.3
  */
-ec_retval_t esc_coe_mailbox_read_upd_cnf(struct ecsd *pecsd, ec_bool_t success) {
+ec_retval_t ecsd_coe_mailbox_read_upd_cnf(struct ecsd *pecsd, ec_bool_t success) {
     assert (pecsd != NULL);
     ec_retval_t ret = 0u;
 
     return ret;
 }
 
+//! \brief 
+/*!
+ * Refer to Service Definition ETG.1000.3
+ */
+ec_retval_t ecsd_coe_mailbox_start(struct ecsd *pecsd) {
+    switch (pecsd->mbx.coe.state) {
+        case COE_STATE_OFF: {
+            pecsd->mbx.coe.seg   = 0u;
+            pecsd->mbx.coe.state = COE_STATE_IDLE;
+            break;
+        }
+        case COE_STATE_DWLE:
+        case COE_STATE_DWLN:
+        case COE_STATE_DWLS:
+        case COE_STATE_UPLE:
+        case COE_STATE_UPLN:
+        case COE_STATE_UPLS:
+        case COE_STATE_INF: {
+            // TODO 
+            // CANCEL SERVICE
+            break;
+        }
+        case COE_STATE_IDLE:
+        case COE_STATE_WSEG: {
+            break;
+        }
+        case COE_STATE_ERR:
+        case COE_STATE_WUPD: {
+            // TODO
+            // RESET MAILBOX
+            break;
+        }
+
+    }
+}
+
+//! \brief 
+/*!
+ * Refer to Service Definition ETG.1000.3
+ */
+ec_retval_t ecsd_coe_mailbox_stop(struct ecsd *pecsd) {
+    switch (pecsd->mbx.coe.state) {
+        case COE_STATE_DWLE:
+        case COE_STATE_DWLN:
+        case COE_STATE_DWLS:
+        case COE_STATE_UPLE:
+        case COE_STATE_UPLN:
+        case COE_STATE_UPLS:
+        case COE_STATE_INF: {
+            // TODO 
+            // CANCEL SERVICE
+            break;
+        }
+        case COE_STATE_OFF:
+        case COE_STATE_IDLE:
+        case COE_STATE_WSEG: {
+            break;
+        }
+        case COE_STATE_ERR:
+        case COE_STATE_WUPD: {
+            // TODO
+            // RESET MAILBOX
+            break;
+        }
+
+    }
+
+    pecsd->mbx.coe.state = COE_STATE_OFF;
+}

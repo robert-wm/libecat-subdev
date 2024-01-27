@@ -35,6 +35,7 @@
 #include <libecat-base/types.h>
 #include <libecat-base/regs.h>
 #include <libecat-subdev/hw.h>
+#include <libecat-subdev/foe.h>
 
 struct ec_object;
 
@@ -44,8 +45,11 @@ struct mailbox {
 
     struct {
         ec_uint8_t state;
+        uint32_t seg;
         struct ec_object *objects;
     } coe;
+
+    struct ecsd_foe foe;
 };
 
 struct ecsd {

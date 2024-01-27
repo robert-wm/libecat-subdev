@@ -37,6 +37,19 @@
 #include <libecat-base/types.h>
 #include <libecat-base/coe.h>
 
+#define COE_STATE_OFF       ((uint8_t)0x00u)
+#define COE_STATE_IDLE      ((uint8_t)0x01u)
+#define COE_STATE_DWLE      ((uint8_t)0x02u)
+#define COE_STATE_DWLN      ((uint8_t)0x03u)
+#define COE_STATE_DWLS      ((uint8_t)0x04u)
+#define COE_STATE_UPLE      ((uint8_t)0x05u)
+#define COE_STATE_UPLN      ((uint8_t)0x06u)
+#define COE_STATE_UPLS      ((uint8_t)0x07u)
+#define COE_STATE_INF       ((uint8_t)0x08u)
+#define COE_STATE_WUPD      ((uint8_t)0x09u)
+#define COE_STATE_WSEG      ((uint8_t)0x0Au)
+#define COE_STATE_ERR       ((uint8_t)0xFFu)
+
 //! \brief 
 /*!
  * Refer to Mailbox Read Upd Service Definition ETG.1000.3

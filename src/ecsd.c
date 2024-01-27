@@ -273,6 +273,16 @@ ec_void_t ecsd_configure_sm_channels_pd(struct ecsd *pecsd, ecsd_sm_direction_t 
  * \param[in]   pecsd        Pointer to ESC struture.
  */
 ec_retval_t ecsd_start_input_handler(struct ecsd *pecsd) {
+    // dc checks
+    uint8_t dc_control[4];
+    hw_read(pecsd, EC_REG_DC_CYCLIC_UNIT_CONTROL, &dc_control[0], 4 * sizeof(uint8_t));
+
+    if (dc_control[1] & EC_REG_DC_ACTIVATION__SYNC_OUT_UNIT_ACTIVATION) {
+        // Sync out unit activation configured by maindevice.
+        ec_bool_t dc_sync0_generation = (dc_control[1] & EC_REG_DC_ACTIVATION__SYNC0_GENERATION) ? 1 : 0;
+        ec_bool_t dc_sync1_generation = (dc_control[1] & EC_REG_DC_ACTIVATION__SYNC1_GENERATION) ? 1 : 0;
+    }
+
     return EC_OK;
 }
 
@@ -340,6 +350,9 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
 
     pecsd->al_control_state = al_control_state;
 
+    ec_log(10, __func__, "al_state %X, al_control %X\n", pecsd->al_state, al_control_state);
+    sleep(1);
+
     switch (pecsd->al_state) 
     {
         case EC_STATE_INIT: 
@@ -349,10 +362,14 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                     // #1.1 | #2
                     if ((pecsd->al_error_flag == EC_TRUE) && (ack_flag == EC_FALSE)) {
                         // #1.1
+                        ec_log(100, __func__, "Transition #1.1, reset al_status_code.\n");
+
                         pecsd->al_status_code = 0u;
                         pecsd->al_state = EC_STATE_INIT;
                     } else { // al_error_flag == EC_FALSE || ack_flag == EC_TRUE
                         // #2
+                        ec_log(100, __func__, "Transition #2, stay.\n");
+
                         pecsd->al_error_flag = EC_FALSE;
                     }
 
@@ -364,6 +381,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                         // #3 | #4
                         if (ecsd_sm_settings_0_and_1_match(pecsd) == EC_TRUE) {
                             // #3
+                            ec_log(100, __func__, "Transition #3, switching to PREOP.\n");
+
                             pecsd->al_error_flag = EC_FALSE;
                             pecsd->al_status_code = 0;
                             pecsd->al_state = EC_STATE_PREOP;
@@ -373,6 +392,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                             ecsd_id_info(pecsd, id_request);
                         } else {
                             // #4
+                            ec_log(100, __func__, "Transition #4, wrong mbx sm settings, staying in INIT.\n");
+
                             pecsd->id_flag = EC_FALSE;
                             pecsd->al_state = EC_STATE_INIT;
                             pecsd->al_status_code = EC_AL_STATUS_CODE__INVALID_MAILBOX_CONFIGURATION__PREOP;
@@ -380,6 +401,7 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                         }
                     } else {
                         // #1.2
+                        ec_log(100, __func__, "Transition #1.2, stay in INIT.\n");
                     }
 
                     ecsd_al_control_rsp(pecsd, pecsd->al_state, pecsd->al_status_code, pecsd->al_error_flag, pecsd->id_flag);
@@ -392,6 +414,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                             // #5 | #6
                             if (ecsd_sm_settings_0_and_1_match(pecsd) == EC_TRUE) {
                                 // #5
+                                ec_log(100, __func__, "Transition #5, switching to BOOT.\n");
+
                                 pecsd->al_error_flag = EC_FALSE;
                                 pecsd->al_state = EC_STATE_BOOT;
                                 pecsd->al_status_code = 0;
@@ -399,6 +423,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                                 (void)ecsd_start_mbx_handler(pecsd);
                             } else {
                                 // #6
+                                ec_log(100, __func__, "Transition #6, wrong mbx sm settings, staying in INIT.\n");
+
                                 pecsd->id_flag = EC_FALSE;
                                 pecsd->al_state = EC_STATE_INIT;
                                 pecsd->al_status_code = EC_AL_STATUS_CODE__INVALID_MAILBOX_CONFIGURATION__BOOT;
@@ -406,6 +432,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                             }
                         } else {
                             // #7
+                            ec_log(100, __func__, "Transition #7, BOOT not supported, staying in INIT.\n");
+
                             pecsd->id_flag = EC_FALSE;
                             pecsd->al_state = EC_STATE_INIT;
                             pecsd->al_status_code = EC_AL_STATUS_CODE__BOOTSTRAP_NOT_SUPPORTED;
@@ -413,6 +441,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                         }
                     } else {
                         // #1.2
+                        ec_log(100, __func__, "Transition #1.2, stay in INIT.\n");
+
                     }
 
                     ecsd_al_control_rsp(pecsd, pecsd->al_state, pecsd->al_status_code, pecsd->al_error_flag, pecsd->id_flag);
@@ -421,18 +451,23 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                 case EC_STATE_OP:
                     if ((pecsd->al_error_flag == EC_FALSE) || (ack_flag == EC_TRUE)) {
                         // #8
+                        ec_log(100, __func__, "Transition #8, invalid state change requested, stay in INIT.\n");
+
                         pecsd->id_flag = EC_FALSE;
                         pecsd->al_state = EC_STATE_INIT;
                         pecsd->al_status_code = EC_AL_STATUS_CODE__INVALID_REQUESTED_STATE_CHANGE;
                         pecsd->al_error_flag = EC_TRUE;
                     } else {
                         // #1.2
+                        ec_log(100, __func__, "Transition #1.2, stay in INIT.\n");
                     }
                         
                     ecsd_al_control_rsp(pecsd, pecsd->al_state, pecsd->al_status_code, pecsd->al_error_flag, pecsd->id_flag);
                     break;
                 default: 
                     // #9
+                    ec_log(100, __func__, "Transition #9, unknown requested state, stay in INIT.\n");
+
                     pecsd->id_flag = EC_FALSE;
                     pecsd->al_state = EC_STATE_INIT;
                     pecsd->al_status_code = EC_AL_STATUS_CODE__UNKNOWN_REQUESTED_STATE;
@@ -448,6 +483,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                     // #11.1 | #12
                     if ((pecsd->al_error_flag == EC_TRUE) && (ack_flag == EC_FALSE)) {
                         // #11.1
+                        ec_log(100, __func__, "Transition #11.1, reset ERROR, switching to INIT.\n");
+
                         pecsd->al_error_flag = EC_FALSE;
                         pecsd->al_status_code = 0;
                         pecsd->al_state = EC_STATE_INIT;
@@ -457,6 +494,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                         ecsd_id_info(pecsd, id_request);
                     } else {
                         // #12
+                        ec_log(100, __func__, "Transition #12, switching to INIT.\n");
+
                         pecsd->al_error_flag = EC_FALSE;
                         pecsd->al_status_code = 0;
                         pecsd->al_state = EC_STATE_INIT;
@@ -471,12 +510,16 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                 case EC_STATE_PREOP:
                     if ((pecsd->al_error_flag == EC_FALSE) || (ack_flag == EC_TRUE)) {
                         // #13
+                        ec_log(100, __func__, "Transition #13, reset ERROR, stay in PREOP.\n");
+
                         pecsd->al_error_flag = EC_FALSE;
                         pecsd->al_status_code = 0;
 
                         ecsd_id_info(pecsd, id_request);
                     } else {
                         // #11.2
+                        ec_log(100, __func__, "Transition #11.2, stay in PREOP.\n");
+
                     }
                         
                     ecsd_al_control_rsp(pecsd, pecsd->al_state, pecsd->al_status_code, pecsd->al_error_flag, pecsd->id_flag);
@@ -489,6 +532,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                             if (    ((ecsd_dc_activated(pecsd) == EC_FALSE) && (pecsd->dc_required == EC_FALSE)) ||
                                     ((ecsd_dc_activated(pecsd) == EC_TRUE) && (pecsd->dc_not_accepted == EC_FALSE) && (pecsd->dc_supported == EC_FALSE)) ) {
                                 // #14.1
+                                ec_log(100, __func__, "Transition #14.1, switching to SAFEOP.\n");
+
                                 pecsd->dc_running = EC_FALSE;
                                 pecsd->al_error_flag = EC_FALSE;
                                 pecsd->al_status_code = 0;
@@ -498,6 +543,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                                 ecsd_id_info(pecsd, id_request);
                             } else if ((ecsd_dc_activated(pecsd) == EC_TRUE) && (pecsd->dc_not_accepted == EC_FALSE) && (pecsd->dc_supported == EC_TRUE)) {
                                 // #14.2
+                                ec_log(100, __func__, "Transition #14.2, switching to SAFEOP.\n");
+
                                 pecsd->dc_running = EC_TRUE;
                                 pecsd->al_error_flag = EC_FALSE;
                                 pecsd->al_status_code = 0;
@@ -508,6 +555,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                             } else if ( ((ecsd_dc_activated(pecsd) == EC_TRUE) && (pecsd->dc_not_accepted == EC_TRUE)) ||
                                     ((ecsd_dc_activated(pecsd) == EC_FALSE) && (pecsd->dc_required == EC_TRUE)) ) {
                                 // #14.3
+                                ec_log(100, __func__, "Transition #14.3, switching to SAFEOP.\n");
+
                                 pecsd->id_flag = EC_FALSE;
                                 pecsd->al_status_code = EC_AL_STATUS_CODE__INVALID_DC_SYNC_CONFIGURATION;
                                 pecsd->al_error_flag = EC_TRUE;
@@ -515,6 +564,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                             }
                         } else {
                             // #17
+                            ec_log(100, __func__, "Transition #17, stay in PREOP.\n");
+
                             pecsd->id_flag = EC_FALSE;
                             pecsd->al_state = EC_STATE_PREOP;
                             pecsd->al_status_code = EC_AL_STATUS_CODE__INVALID_SYNC_MANAGER_CONFIGURATION;
@@ -529,6 +580,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                 case EC_STATE_OP:
                 case EC_STATE_BOOT:
                     // #18
+                    ec_log(100, __func__, "Transition #18, invalid state change requested, stay in PREOP.\n");
+
                     pecsd->id_flag = EC_FALSE;
                     pecsd->al_state = EC_STATE_PREOP;
                     pecsd->al_status_code = EC_AL_STATUS_CODE__INVALID_REQUESTED_STATE_CHANGE;
@@ -538,6 +591,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                     break;
                 default:
                     // #19
+                    ec_log(100, __func__, "Transition #19, unknown state change requested, stay in PREOP.\n");
+
                     pecsd->id_flag = EC_FALSE;
                     pecsd->al_state = EC_STATE_PREOP;
                     pecsd->al_status_code = EC_AL_STATUS_CODE__UNKNOWN_REQUESTED_STATE;
@@ -553,6 +608,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                     // #22.1 | #23
                     if ((pecsd->al_error_flag == EC_TRUE) && (ack_flag == EC_FALSE)) {
                         // #22.1
+                        ec_log(100, __func__, "Transition #22.1, reset ERROR, switching to INIT.\n");
+
                         pecsd->al_error_flag = EC_FALSE;
                         pecsd->al_status_code = 0u;
                         pecsd->al_state = EC_STATE_INIT;
@@ -564,6 +621,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                         ecsd_id_info(pecsd, id_request);
                     } else {
                         // #23
+                        ec_log(100, __func__, "Transition #23, switching to INIT.\n");
+
                         pecsd->al_error_flag = EC_FALSE;
                         pecsd->al_state = EC_STATE_INIT;
 
@@ -577,6 +636,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                     break;
                 case EC_STATE_PREOP:
                     // #24
+                    ec_log(100, __func__, "Transition #23, switching to PREOP.\n");
+
                     if ((pecsd->al_error_flag == EC_FALSE) || (ack_flag == EC_TRUE)) {
                         pecsd->al_error_flag = EC_FALSE;
                         pecsd->al_state = EC_STATE_PREOP;
@@ -591,6 +652,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                     // #25.1 | #25.2 
                     if ((pecsd->al_error_flag == EC_TRUE) && ((pecsd->local_error_flag == EC_FALSE) && (ack_flag == EC_TRUE))) {
                         // #25.1
+                        ec_log(100, __func__, "Transition #25.1, reset ERROR, stay in SAFEOP.\n");
+
                         pecsd->al_error_flag = EC_FALSE;
                         pecsd->al_status_code = 0u;
 
@@ -599,6 +662,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                         ecsd_id_info(pecsd, id_request);
                     } else if ((pecsd->al_error_flag == EC_FALSE) || ((pecsd->local_error_flag == EC_TRUE) && (ack_flag == EC_TRUE))) {
                         // #25.2
+                        ec_log(100, __func__, "Transition #25.2, reset ERROR, stay in SAFEOP.\n");
+
                         pecsd->al_error_flag = EC_FALSE;
                         pecsd->al_status_code = 0u;
 
@@ -615,6 +680,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                                 (pecsd->local_error_flag == EC_FALSE)) 
                         {
                             // #26.2
+                            ec_log(100, __func__, "Transition #26.2, switching to OP.\n");
+
                             pecsd->al_error_flag = EC_FALSE;
                             pecsd->al_status_code = 0u;
                             pecsd->al_state = EC_STATE_OP;
@@ -626,6 +693,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                             ecsd_id_info(pecsd, id_request);
                         } else if ((pecsd->dc_running == EC_TRUE) && (pecsd->pll_running == EC_FALSE) && (pecsd->local_error_flag == EC_FALSE)) {
                             // #26.4
+                            ec_log(100, __func__, "Transition #26.4, switching to OP.\n");
+
                             ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_write, ecsd_sm_mode_enable);
 
                             pecsd->wait_for_pll_running = EC_TRUE;
@@ -637,12 +706,16 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                                     ((pecsd->dc_running == EC_FALSE) || (pecsd->pll_running == EC_TRUE)) &&
                                     (pecsd->local_error_flag == EC_FALSE) ) {
                             // #27.1
+                            ec_log(100, __func__, "Transition #27.1, sync manager watchdog expired, stay in SAFEOP.\n");
+
                             pecsd->id_flag = EC_FALSE;
                             pecsd->al_state = EC_STATE_SAFEOP;
                             pecsd->al_status_code = EC_AL_STATUS_CODE__SYNC_MANAGER_WATCHDOG;
                             pecsd->al_error_flag = EC_TRUE;
                         } else if (pecsd->local_error_flag == EC_TRUE) {
                             // #27.2
+                            ec_log(100, __func__, "Transition #27.2, stay in SAFEOP.\n");
+
                             pecsd->id_flag = EC_FALSE;
                             pecsd->al_state = EC_STATE_SAFEOP;
                             pecsd->al_status_code = pecsd->local_error_code;
@@ -658,18 +731,24 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                     // #29 | #22.2
                     if ((pecsd->al_error_flag == EC_FALSE) || (ack_flag == EC_TRUE)) { 
                         // #29
+                        ec_log(100, __func__, "Transition #29, invalid state change requested, stay in SAFEOP.\n");
+
                         pecsd->id_flag = EC_FALSE;
                         pecsd->al_state = EC_STATE_SAFEOP;
                         pecsd->al_status_code = EC_AL_STATUS_CODE__INVALID_REQUESTED_STATE_CHANGE;
                         pecsd->al_error_flag = EC_TRUE;
                     } else {
                         // #22.2
+                        ec_log(100, __func__, "Transition #22.2, stay in SAFEOP.\n");
+
                     }
                         
                     ecsd_al_control_rsp(pecsd, pecsd->al_state, pecsd->al_status_code, pecsd->al_error_flag, pecsd->id_flag);
                     break;
                 default:
                     // #30
+                    ec_log(100, __func__, "Transition #30, unknown state change requested, stay in SAFEOP.\n");
+
                     pecsd->id_flag = EC_FALSE;
                     pecsd->al_state = EC_STATE_SAFEOP;
                     pecsd->al_status_code = EC_AL_STATUS_CODE__UNKNOWN_REQUESTED_STATE;
@@ -683,6 +762,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
             switch (al_control_state) {
                 case EC_STATE_INIT: 
                     // #37
+                    ec_log(100, __func__, "Transition #37, switch to INIT.\n");
+
                     pecsd->al_status_code = 0u;
                     pecsd->al_error_flag = EC_FALSE;
                     pecsd->al_state = EC_STATE_INIT;
@@ -695,6 +776,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                     break;
                 case EC_STATE_PREOP:
                     // #38
+                    ec_log(100, __func__, "Transition #38, switch to PREOP.\n");
+
                     pecsd->al_error_flag = EC_FALSE;
                     pecsd->al_status_code = 0u;
                     pecsd->al_state = EC_STATE_PREOP;
@@ -706,6 +789,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                     break;
                 case EC_STATE_SAFEOP:
                     // #39
+                    ec_log(100, __func__, "Transition #39, switch to SAFEOP.\n");
+
                     pecsd->al_error_flag = EC_FALSE;
                     pecsd->al_status_code = 0u;
                     pecsd->al_state = EC_STATE_SAFEOP;
@@ -716,10 +801,14 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                     break;
                 case EC_STATE_OP:
                     // #40
+                    ec_log(100, __func__, "Transition #40, stay in OP.\n");
+
                     ecsd_id_info(pecsd, id_request);
                     break;
                 case EC_STATE_BOOT:
                     // #42
+                    ec_log(100, __func__, "Transition #42, invaild state change requested, switch to SAFEOP.\n");
+
                     pecsd->id_flag = EC_FALSE;
                     pecsd->al_state = EC_STATE_SAFEOP;
                     pecsd->al_status_code = EC_AL_STATUS_CODE__INVALID_REQUESTED_STATE_CHANGE;
@@ -731,6 +820,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                     break;
                 default:
                     // #43
+                    ec_log(100, __func__, "Transition #43, unknown state change requested, switch to SAFEOP.\n");
+
                     pecsd->id_flag = EC_FALSE;
                     pecsd->al_state = EC_STATE_SAFEOP;
                     pecsd->al_status_code = EC_AL_STATUS_CODE__UNKNOWN_REQUESTED_STATE;
@@ -747,6 +838,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
             switch (al_control_state) {
                 case EC_STATE_INIT:
                     // #51
+                    ec_log(100, __func__, "Transition #51, switch to INIT.\n");
+
                     pecsd->al_error_flag = EC_FALSE;
                     pecsd->al_state = EC_STATE_INIT;
 
@@ -754,6 +847,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                     break;
                 case EC_STATE_BOOT:
                     // #52
+                    ec_log(100, __func__, "Transition #52, stay in BOOT.\n");
+
                     pecsd->al_error_flag = EC_FALSE;
                 case EC_STATE_PREOP:
                 case EC_STATE_SAFEOP:
@@ -764,6 +859,10 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
             }
             ecsd_al_control_rsp(pecsd, pecsd->al_state, pecsd->al_status_code, pecsd->al_error_flag, pecsd->id_flag);
             break;
+        default: {
+            pecsd->al_state = EC_STATE_INIT;
+            break;
+        }
     }
 
     return retval;
@@ -999,5 +1098,6 @@ ec_void_t ecsd_pdo(struct ecsd *pecsd) {
 }
 
 ec_void_t ecsd_pdi(struct ecsd *pecsd) {
+    pecsd->ready_for_op                = EC_TRUE;
 }
 

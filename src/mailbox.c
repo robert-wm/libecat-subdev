@@ -31,6 +31,7 @@
 #include <libecat-base/types.h>
 #include <libecat-subdev/hw.h>
 #include <libecat-subdev/mailbox.h>
+#include <libecat-subdev/coe.h>
 
 #include <assert.h>
 #include <stdlib.h>
@@ -70,7 +71,7 @@ ec_uint32_t esc_mailbox_written(struct ecsd *pecsd) {
 
     switch (type) {
         case EC_MBX_HDR__TYPE__COE:
-            // TODO ...
+            ret = ecsd_coe_mailbox_write_ind(pecsd, (struct ec_coe_service_data *)&mbx);
             break;
         case EC_MBX_HDR__TYPE__FOE:
             // TODO
