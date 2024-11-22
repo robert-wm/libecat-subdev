@@ -807,44 +807,7 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                 case EC_STATE_OP:
                     // # 26.2 | #26.4 | #27.1 | #27.2 | #22.2
                     if ((pecsd->al_error_flag == EC_FALSE) || (ack_flag == EC_TRUE)) { 
-                        if (    (pecsd->ready_for_op == EC_TRUE) && 
-                                ((pecsd->dc_running == EC_FALSE) || (pecsd->pll_running == EC_TRUE)) && 
-                                (pecsd->local_error_flag == EC_FALSE)) 
-                        {
-                            // #26.2
-                            ec_log(100, __func__, "Transition #26.2, switching to OP.\n");
-
-                            pecsd->al_error_flag = EC_FALSE;
-                            pecsd->al_status_code = 0u;
-                            pecsd->al_state = EC_STATE_OP;
-
-                            ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_read, ecsd_sm_mode_enable);
-                            ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_write, ecsd_sm_mode_enable);
-                            ecsd_start_local_output_handler(pecsd);
-
-                            ecsd_id_info(pecsd, id_request);
-                        } else if ((pecsd->dc_running == EC_TRUE) && (pecsd->pll_running == EC_FALSE) && (pecsd->local_error_flag == EC_FALSE)) {
-                            // #26.4
-                            ec_log(100, __func__, "Transition #26.4, switching to OP.\n");
-
-                            ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_write, ecsd_sm_mode_enable);
-
-                            pecsd->wait_for_pll_running = EC_TRUE;
-
-                            ecsd_start_safeop_2_op_timeout_timer(pecsd);
-
-                            ecsd_id_info(pecsd, id_request);
-                        } else if ( (pecsd->ready_for_op == EC_FALSE) && 
-                                    ((pecsd->dc_running == EC_FALSE) || (pecsd->pll_running == EC_TRUE)) &&
-                                    (pecsd->local_error_flag == EC_FALSE) ) {
-                            // #27.1
-                            ec_log(100, __func__, "Transition #27.1, sync manager watchdog expired, stay in SAFEOP.\n");
-
-                            pecsd->id_flag = EC_FALSE;
-                            pecsd->al_state = EC_STATE_SAFEOP;
-                            pecsd->al_status_code = EC_AL_STATUS_CODE__SYNC_MANAGER_WATCHDOG;
-                            pecsd->al_error_flag = EC_TRUE;
-                        } else if (pecsd->local_error_flag == EC_TRUE) {
+                        if (pecsd->local_error_flag == EC_TRUE) {
                             // #27.2
                             ec_log(100, __func__, "Transition #27.2, stay in SAFEOP.\n");
 
@@ -852,6 +815,44 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                             pecsd->al_state = EC_STATE_SAFEOP;
                             pecsd->al_status_code = pecsd->local_error_code;
                             pecsd->al_error_flag = EC_TRUE;
+                        } else {
+                            if (    (pecsd->ready_for_op == EC_TRUE) &&
+                                    (   (pecsd->dc_running == EC_FALSE) || (pecsd->pll_running == EC_TRUE)  )   )
+                            {
+                                // #26.2
+                                ec_log(100, __func__, "Transition #26.2, switching to OP.\n");
+
+                                pecsd->al_error_flag = EC_FALSE;
+                                pecsd->al_status_code = 0u;
+                                pecsd->al_state = EC_STATE_OP;
+
+                                ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_read, ecsd_sm_mode_enable);
+                                ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_write, ecsd_sm_mode_enable);
+                                ecsd_start_local_output_handler(pecsd);
+
+                                ecsd_id_info(pecsd, id_request);
+                            } else if ((pecsd->dc_running == EC_TRUE) && (pecsd->pll_running == EC_FALSE)) {
+                                // #26.4
+                                ec_log(100, __func__, "Transition #26.4, switching to OP.\n");
+
+                                ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_write, ecsd_sm_mode_enable);
+
+                                pecsd->wait_for_pll_running = EC_TRUE;
+
+                                ecsd_start_safeop_2_op_timeout_timer(pecsd);
+
+                                ecsd_id_info(pecsd, id_request);
+                            } else if ( (pecsd->ready_for_op == EC_FALSE) &&
+                                        (   (pecsd->dc_running == EC_FALSE) || (pecsd->pll_running == EC_TRUE)  )   )
+                            {
+                                // #27.1
+                                ec_log(100, __func__, "Transition #27.1, sync manager watchdog expired, stay in SAFEOP.\n");
+
+                                pecsd->id_flag = EC_FALSE;
+                                pecsd->al_state = EC_STATE_SAFEOP;
+                                pecsd->al_status_code = EC_AL_STATUS_CODE__SYNC_MANAGER_WATCHDOG;
+                                pecsd->al_error_flag = EC_TRUE;
+                            }
                         }
                     } else {
                         // #22.2
