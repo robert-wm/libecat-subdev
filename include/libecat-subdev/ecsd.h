@@ -46,6 +46,9 @@ struct mailbox {
     struct {
         ec_uint8_t state;
         uint32_t seg;
+        uint32_t fragments_left;
+        uint16_t odlist_start_after;
+        uint8_t repeat_mbx_buffer[ECSD_MAILBOX_READ__MAX_LENGTH];
         struct ec_object *objects;
     } coe;
 
