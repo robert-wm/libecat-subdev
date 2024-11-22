@@ -193,10 +193,29 @@ ec_bool_t ecsd_start_mbx_handler(struct ecsd *pecsd) {
         }
 
         if (ret == EC_TRUE) {
+#ifdef ECSD_MAILBOX_COE_SUPPORT
+            ret = !ecsd_coe_mailbox_start(pecsd);
+#endif
+#ifdef ECSD_MAILBOX_FOE_SUPPORT
+            ret = !ecsd_foe_mailbox_start(pecsd);
+#endif
+#ifdef ECSD_MAILBOX_EOE_SUPPORT
+            ret = !ecsd_eoe_mailbox_start(pecsd);
+#endif
+#ifdef ECSD_MAILBOX_SOE_SUPPORT
+            ret = !ecsd_soe_mailbox_start(pecsd);
+#endif
+#ifdef ECSD_MAILBOX_VOE_SUPPORT
+            ret = !ecsd_voe_mailbox_start(pecsd);
+#endif
+        }
+
+        if (ret == EC_TRUE) {
             // All OK -> Enable receive and send sync manager.
             ecsd_enable_sm_channel(pecsd, 0);
             ecsd_enable_sm_channel(pecsd, 1);
 
+            pecsd->mbx.counter = 1;
             pecsd->mbx_running = EC_TRUE;
         }
     }
@@ -217,6 +236,22 @@ ec_bool_t ecsd_stop_mbx_handler(struct ecsd *pecsd) {
         ecsd_disable_sm_channel(pecsd, 1);
             
         pecsd->mbx_running = EC_FALSE;
+        
+#ifdef ECSD_MAILBOX_COE_SUPPORT
+        ret = !ecsd_coe_mailbox_stop(pecsd);
+#endif
+#ifdef ECSD_MAILBOX_FOE_SUPPORT
+        ret = !ecsd_foe_mailbox_stop(pecsd);
+#endif
+#ifdef ECSD_MAILBOX_EOE_SUPPORT
+        ret = !ecsd_eoe_mailbox_stop(pecsd);
+#endif
+#ifdef ECSD_MAILBOX_SOE_SUPPORT
+        ret = !ecsd_soe_mailbox_stop(pecsd);
+#endif
+#ifdef ECSD_MAILBOX_VOE_SUPPORT
+        ret = !ecsd_voe_mailbox_stop(pecsd);
+#endif
     }
 
     return ret;
@@ -274,27 +309,59 @@ ec_void_t ecsd_configure_sm_channels_pd(struct ecsd *pecsd, ecsd_sm_direction_t 
  */
 ec_retval_t ecsd_start_input_handler(struct ecsd *pecsd) {
     // dc checks
-    uint8_t dc_control[4];
-    hw_read(pecsd, EC_REG_DC_CYCLIC_UNIT_CONTROL, &dc_control[0], 4 * sizeof(uint8_t));
+    uint16_t al_event_mask = 0x0000080C;
+    uint16_t dc_control[2];
+    pecsd->hw.read(pecsd->hw.hdl, EC_REG_DC_CYCLIC_UNIT_CONTROL_ACT, (void *)&dc_control[0], 2 * sizeof(uint16_t));
 
-    if (dc_control[1] & EC_REG_DC_ACTIVATION__SYNC_OUT_UNIT_ACTIVATION) {
+    if (dc_control[0] & EC_REG_DC_CYCLIC_UNIT_CONTROL_ACT__SYNC_OUT_UNIT_ACTIVATION) {
         // Sync out unit activation configured by maindevice.
-        ec_bool_t dc_sync0_generation = (dc_control[1] & EC_REG_DC_ACTIVATION__SYNC0_GENERATION) ? 1 : 0;
-        ec_bool_t dc_sync1_generation = (dc_control[1] & EC_REG_DC_ACTIVATION__SYNC1_GENERATION) ? 1 : 0;
+        ec_bool_t dc_sync0_generation = (dc_control[0] & EC_REG_DC_CYCLIC_UNIT_CONTROL_ACT__SYNC0_GENERATION) ? 1 : 0;
+        ec_bool_t dc_sync1_generation = (dc_control[0] & EC_REG_DC_CYCLIC_UNIT_CONTROL_ACT__SYNC1_GENERATION) ? 1 : 0;
+
+        if (dc_sync0_generation && pecsd->hw.enable_sync0) {
+            pecsd->hw.enable_sync0(pecsd, EC_TRUE);
+        }
+
+        if (dc_sync1_generation && pecsd->hw.enable_sync1) {
+            pecsd->hw.enable_sync1(pecsd, EC_TRUE);
+        }
     }
+
+    pecsd->hw.read(pecsd->hw.hdl, EC_REG_SYNC_MANAGER_2, (ec_uint8_t *)&pecsd->pdoutputs, sizeof(pecsd->pdoutputs));
+    pecsd->hw.read(pecsd->hw.hdl, EC_REG_SYNC_MANAGER_3, (ec_uint8_t *)&pecsd->pdinputs, sizeof(pecsd->pdinputs));
+
+    // Start al event on corresponding Sync Manager 3.
+    ecsd_set_al_event_mask(pecsd, al_event_mask);
 
     return EC_OK;
 }
 
 ec_retval_t ecsd_stop_input_handler(struct ecsd *pecsd) {
+    // Stop al event on corresponding Sync Manager 3.
+    ecsd_reset_al_event_mask(pecsd, 0x0000080C);
+
+    if (pecsd->hw.enable_sync0) {
+        pecsd->hw.enable_sync0(pecsd, EC_FALSE);
+    }
+
+    if (pecsd->hw.enable_sync1) {
+        pecsd->hw.enable_sync1(pecsd, EC_FALSE);
+    }
+
     return EC_OK;
 }
 
 ec_retval_t ecsd_start_local_output_handler(struct ecsd *pecsd) {
+    // Start al event on corresponding Sync Manager 2
+    ecsd_set_al_event_mask(pecsd, 0x00000400);
+
     return EC_OK;
 }
 
 ec_retval_t ecsd_stop_local_output_handler(struct ecsd *pecsd) {
+    // Stop al event on corresponding Sync Manager 2
+    ecsd_reset_al_event_mask(pecsd, 0x00000400);
+
     return EC_OK;
 }
 
