@@ -34,6 +34,32 @@
 #include <libecat-subdev/settings.h>
 #include <libecat-subdev/ecsd.h>
 #include <libecat-subdev/hw.h>
+typedef enum ec_sm_direction {
+    ecsd_sm_direction_read,      //!< \brief Read configuration  => ESC-read  <-> PDI-write
+    ecsd_sm_direction_write      //!< \brief Write configuration => ESC-write <-> PDI-read
+} ecsd_sm_direction_t;
+
+typedef enum ecsd_sm_mode {
+    ecsd_sm_mode_enable,         //!< \brief Enable Sync Manager.
+    ecsd_sm_mode_disable         //!< \brief Disable Sync Manager.
+} ecsd_sm_mode_t;
+
+// forward declarations
+static ec_retval_t ecsd_al_state_change_req(struct ecsd *pecsd, ec_uint8_t al_state, ec_uint16_t al_status_code);
+static ec_void_t ecsd_set_al_event_mask(struct ecsd *pecsd, uint32_t bits_to_set);
+static ec_void_t ecsd_reset_al_event_mask(struct ecsd *pecsd, uint32_t bits_to_reset);
+static ec_bool_t ecsd_sm_settings_0_and_1_match(struct ecsd *pecsd);
+static ec_bool_t ecsd_sm_settings_2_to_n_match(struct ecsd *pecsd);
+static ec_void_t ecsd_enable_sm_channel(struct ecsd *pecsd, ec_uint8_t ch);
+static ec_void_t ecsd_disable_sm_channel(struct ecsd *pecsd, ec_uint8_t ch);
+static ec_bool_t ecsd_start_mbx_handler(struct ecsd *pecsd);
+static ec_bool_t ecsd_stop_mbx_handler(struct ecsd *pecsd);
+static ec_void_t ecsd_configure_sm_channels_pd(struct ecsd *pecsd, ecsd_sm_direction_t sm_dir, ecsd_sm_mode_t sm_mode);
+static ec_retval_t ecsd_start_input_handler(struct ecsd *pecsd);
+static ec_retval_t ecsd_stop_input_handler(struct ecsd *pecsd);
+static ec_retval_t ecsd_start_local_output_handler(struct ecsd *pecsd);
+static ec_retval_t ecsd_stop_local_output_handler(struct ecsd *pecsd);
+ec_void_t ecsd_ack_sm_chg(struct ecsd *pecsd);
 
 //! \brief Opens and initializes EtherCAT SubDev
 /*!
@@ -70,7 +96,6 @@ ec_void_t ecsd_open(struct ecsd *pecsd, void *ecsd_base, ec_uint16_t pdi_type) {
     pecsd->mbx_running                 = EC_FALSE;
 }
 
-ec_retval_t ecsd_al_state_change_req(struct ecsd *pecsd, ec_uint8_t al_state, ec_uint16_t al_status_code);
 
 ec_bool_t ecsd_sm_settings_0_and_1_match(struct ecsd *pecsd) {
     ec_bool_t ret = EC_TRUE;
@@ -256,16 +281,6 @@ ec_bool_t ecsd_stop_mbx_handler(struct ecsd *pecsd) {
 
     return ret;
 }
-
-typedef enum ec_sm_direction {
-    ecsd_sm_direction_read,      //!< \brief Read configuration  => ESC-read  <-> PDI-write
-    ecsd_sm_direction_write      //!< \brief Write configuration => ESC-write <-> PDI-read
-} ecsd_sm_direction_t;
-
-typedef enum ecsd_sm_mode {
-    ecsd_sm_mode_enable,         //!< \brief Enable Sync Manager.
-    ecsd_sm_mode_disable         //!< \brief Disable Sync Manager.
-} ecsd_sm_mode_t;
 
 //! \brief Enable sync manager channels for PD In- or Outputs
 /*!
