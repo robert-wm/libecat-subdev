@@ -146,6 +146,12 @@ ec_void_t ecsd_al_control_rsp(struct ecsd *pecsd, ec_uint8_t al_state,
  */
 ec_void_t ecsd_sm_chg(struct ecsd *pecsd);
 
+//! \brief Received PLL running event.
+/*!
+ * \param[in]   pecsd        Pointer to ECSD struture.
+ */
+ec_void_t ecsd_pll_running_event(struct ecsd *pecsd);
+
 ec_void_t ecsd_sync0(struct ecsd *pecsd);
 ec_void_t ecsd_sync1(struct ecsd *pecsd);
 ec_void_t ecsd_pdo(struct ecsd *pecsd);
