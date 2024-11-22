@@ -1053,7 +1053,7 @@ ec_retval_t ecsd_al_state_change_req(struct ecsd *pecsd, ec_uint8_t al_state, ec
     switch (pecsd->al_state) {
         case EC_STATE_SAFEOP:
             // #34.1 | #34.2 | #34.3 | #34.4 | #34.5
-            if ((al_state == EC_STATE_SAFEOP) && (pecsd->al_error_flag == EC_TRUE)) {
+            if ((al_state == EC_STATE_SAFEOP) && (pecsd->al_error_flag == EC_TRUE) && (pecsd->local_error_flag == EC_FALSE)) {
                 // #34.1
                 pecsd->id_flag = EC_FALSE;
                 ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_write, ecsd_sm_mode_disable);
@@ -1062,8 +1062,7 @@ ec_retval_t ecsd_al_state_change_req(struct ecsd *pecsd, ec_uint8_t al_state, ec
                 pecsd->local_error_flag = EC_TRUE;
                 pecsd->local_error_code = al_status_code;
 
-                // TODO this is an endless recursion:
-                //ecsd_al_state_change_req(pecsd, pecsd->al_state, pecsd->al_status_code);
+                ecsd_al_state_change_req(pecsd, pecsd->al_state, pecsd->al_status_code);
             } else if ((al_state == EC_STATE_SAFEOP) && (pecsd->al_error_flag == EC_FALSE)) {
                 // #34.2
                 ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_read, ecsd_sm_mode_enable);
