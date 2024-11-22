@@ -105,13 +105,17 @@ struct ecsd {
 
 //! \brief Opens and initializes EtherCAT SubDev
 /*!
- * \param[in]   pecsd       Pointer to ECSD struture.
- * \param[in]   ecsd_base   Base address of ECSD memory.
- * \param[in]   pdi_type    Type of PDI waiting for ECSD to become ready.
+ * \param[in]   pecsd           Pointer to ECSD struture.
+ * \param[in]   hw_hwl          Handle to hardware.
+ * \param[in]   read_func       Pointer to hw read function.
+ * \param[in]   write_func      Pointer to hw write function.
+ * \param[in]   enable_int_func Pointer to hw enable interrupt function.
+ * \param[in]   pdi_type        Type of PDI waiting for ECSD to become ready.
  *
  * \retval  OK on success.
  */
-ec_void_t ecsd_open(struct ecsd *pecsd, void *ecsd_base, ec_uint16_t pdi_type);
+ec_void_t ecsd_open(struct ecsd *pecsd, void *hw_hdl, ecsd_hw_read read_func,
+        ecsd_hw_write write_func, ecsd_hw_enable_int enable_int_func, ec_uint16_t pdi_type);
             
 //! \brief AL control indication
 /*!
