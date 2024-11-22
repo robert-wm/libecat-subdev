@@ -38,26 +38,35 @@
 #define MAILBOX_STATE_INF       2
 #define MAILBOX_STATE_ERR       3
 
-ec_retval_t ecsd_mbx_write(struct ecsd *pecsd, struct ec_mailbox *mbx);
-
-//! \brief 
+//! \brief
 /*!
  * Refer to Service Definition ETG.1000.3
+ *
+ * Issued by Mailbox handler to DL
+ *
+ * Write a message to DL.
  */
-ec_retval_t ecsd_mailbox_read_upd(struct ecsd *pecsd, struct ec_mailbox *mbx);
+ec_retval_t ecsd_mailbox_read_upd_req(struct ecsd *pecsd, struct ec_mailbox *mbx);
 
 //! \brief 
 /*!
  * Refer to Service Definition ETG.1000.3
+ *
+ * Issued by DL to Mailbox handler
+ *
+ * Called when MainDevice has written the write mailbox.
  */
 ec_retval_t ecsd_mailbox_write_ind(struct ecsd *pecsd, struct ec_mailbox *mbx);
 
 //! \brief 
 /*!
  * Refer to Service Definition ETG.1000.3
+ *
+ * Issued by DL to Mailbox handler.
+ *
+ * Called when message from DL written to read mailbox was successfully read
+ * by MainDevice. Check if we have to send more message.
  */
 ec_retval_t ecsd_mailbox_read_upd_cnf(struct ecsd *pecsd, ec_bool_t success);
 
 #endif // LIBECAT_SUBDEV_MAILBOX_H
-
-
