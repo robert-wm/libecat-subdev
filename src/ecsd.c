@@ -94,6 +94,7 @@ ec_void_t ecsd_open(struct ecsd *pecsd, void *hw_hdl, ecsd_hw_read read_func,
     pecsd->dc_required                 = EC_FALSE;
     pecsd->dc_running                  = EC_FALSE;
     pecsd->dc_supported                = EC_FALSE;
+    pecsd->dc_counter                  = 0;
     pecsd->local_error_code            = 0u;
     pecsd->local_error_flag            = EC_FALSE;
     pecsd->pll_running                 = EC_FALSE;
@@ -442,12 +443,11 @@ ec_void_t ecsd_id_info(struct ecsd *pecsd, ec_bool_t id_request) {
 }
 
 ec_bool_t ecsd_dc_activated(struct ecsd *pecsd) {
-    return EC_FALSE;
+    return EC_TRUE;
 }
                             
 ec_void_t ecsd_start_safeop_2_op_timeout_timer(struct ecsd *pecsd) {
 }
-                
 
 // Acknowledge SM change event by reading byte 6 of SM channels.
 ec_void_t ecsd_ack_sm_chg(struct ecsd *pecsd) {
@@ -494,7 +494,6 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
     pecsd->al_control_state = al_control_state;
 
     ec_log(10, __func__, "al_state %X, al_control %X\n", pecsd->al_state, al_control_state);
-    sleep(1);
 
     switch (pecsd->al_state) 
     {
@@ -1234,6 +1233,38 @@ ec_retval_t ecsd_al_state_change_req(struct ecsd *pecsd, ec_uint8_t al_state, ec
 }
 
 ec_void_t ecsd_sync0(struct ecsd *pecsd) {
+    pecsd->dc_running = EC_TRUE;
+    pecsd->dc_counter++;
+
+    //ec_uint32_t al_event;
+    ec_uint16_t al_event;
+
+    // read al event-register from esc
+    pecsd->hw.read(pecsd->hw.hdl, EC_REG_AL_EVENT_REQUEST, (void *)&al_event, 2);
+//
+//    if (al_event & 0x0040) {
+//      uint16_t wd_status;
+//      pecsd->hw.read(pecsd->hw.hdl, 0x440, (void *)&wd_status, 2);
+//      pecsd->hw.write(pecsd->hw.hdl, 0x440, (void *)&wd_status, 2);
+//    }
+//
+//    ec_uint16_t regs[0x12];
+//    pecsd->hw.read(pecsd->hw.hdl, 0x200, (void *)&regs[0], 0x24);
+//  uint8_t pdi_error[4];
+//  pecsd->hw.read(pecsd->hw.hdl, 0x30C, &pdi_error[0], 4);
+
+//
+//    // read al event-register from esc
+//    pecsd->hw.read(pecsd->hw.hdl, EC_REG_AL_EVENT_REQUEST, (void *)&al_event, 2);
+//
+//    if (al_event & EC_REG_AL_EVENT_REQUEST__SM_INTERRUPT__SM_MASK(2)) {
+//      // output event
+//      pecsd->hw.read(pecsd->hw.hdl, pecsd->pdoutputs.address, &pecsd->pdoutputs_data[0], pecsd->pdoutputs.length);
+//    }
+
+
+    ecsd_input_mapping(pecsd);
+    pecsd->hw.write(pecsd->hw.hdl, pecsd->pdinputs.address, &pecsd->pdinputs_data[0], pecsd->pdinputs.length);
 }
 
 ec_void_t ecsd_sync1(struct ecsd *pecsd) {
@@ -1244,5 +1275,30 @@ ec_void_t ecsd_pdo(struct ecsd *pecsd) {
 
 ec_void_t ecsd_pdi(struct ecsd *pecsd) {
     pecsd->ready_for_op                = EC_TRUE;
+    ec_uint32_t al_event;
+    pecsd->hw.read(pecsd->hw.hdl, EC_REG_AL_EVENT_MASK, (void *)&al_event, 4);
+
+    // read al event-register from esc
+    pecsd->hw.read(pecsd->hw.hdl, EC_REG_AL_EVENT_REQUEST, (void *)&al_event, 4);
+    if (al_event & EC_REG_AL_EVENT_REQUEST__SM_INTERRUPT__SM_MASK(2)) {
+        // output event
+        pecsd->dc_counter = 0;
+        pecsd->hw.read(pecsd->hw.hdl, pecsd->pdoutputs.address, &pecsd->pdoutputs_data[0], pecsd->pdoutputs.length);
+        ecsd_output_mapping(pecsd);
+    }
+
+//    if (al_event & EC_REG_AL_EVENT_REQUEST__SM_INTERRUPT__SM_MASK(3)) {
+//      // input event
+//      pecsd->hw.write(pecsd->hw.hdl, pecsd->pdinputs.address, &pecsd->pdinputs_data[0], pecsd->pdinputs.length);
+//    }
+
+    // Overrun check
+     pecsd->hw.read(pecsd->hw.hdl, EC_REG_AL_EVENT_REQUEST, (void *)&al_event, 4);
+     if (al_event & EC_REG_AL_EVENT_REQUEST__SM_INTERRUPT__SM_MASK(2)) {
+        uint8_t dummy[2];
+        pecsd->hw.read(pecsd->hw.hdl, pecsd->pdoutputs.address, &dummy[0], 2);
+        pecsd->hw.read(pecsd->hw.hdl, pecsd->pdoutputs.address + pecsd->pdoutputs.length - 2, &dummy[0], 2);
+     }
 }
+
 

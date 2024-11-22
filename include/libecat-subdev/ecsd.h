@@ -37,6 +37,8 @@
 #include <libecat-subdev/hw.h>
 #include <libecat-subdev/foe.h>
 
+#include "settings.h"
+
 struct ec_object;
 
 struct mailbox {
@@ -53,6 +55,8 @@ struct mailbox {
     } coe;
 
     struct ecsd_foe foe;
+
+    int counter;
 };
 
 struct ecsd {
@@ -72,6 +76,8 @@ struct ecsd {
     ec_bool_t dc_running;                       //!< \brief DCs are running and used for synchronization between master and
                                                 // slave application.
     ec_bool_t dc_supported;                     //!< \brief Device supports at least one OpMode which uses Distributed Clocks
+
+    ec_int32_t dc_counter;
 
     ec_uint16_t local_error_code;               //!< \brief Original reason of a previous local error which resulted in disabeling
                                                 // SyncManager channels
@@ -104,6 +110,12 @@ struct ecsd {
                                                 //
     struct mailbox mbx;
     struct hw hw;
+
+    struct ec_slave_sm pdoutputs;
+    struct ec_slave_sm pdinputs;
+
+    uint8_t pdoutputs_data[1024];
+    uint8_t pdinputs_data[1024];
 };
 
 //! \brief Opens and initializes EtherCAT SubDev
