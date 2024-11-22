@@ -96,6 +96,29 @@ ec_void_t ecsd_open(struct ecsd *pecsd, void *ecsd_base, ec_uint16_t pdi_type) {
     pecsd->mbx_running                 = EC_FALSE;
 }
 
+ec_void_t ecsd_set_al_event_mask(struct ecsd *pecsd, uint32_t bits_to_set) {
+    // Start al event mask.
+    uint32_t al_event_mask = 0u;
+
+    pecsd->hw.read(pecsd->hw.hdl, EC_REG_AL_EVENT_MASK, (void *)al_event_mask, sizeof(al_event_mask));
+    al_event_mask |= bits_to_set;
+    
+    pecsd->hw.enable_int(pecsd->hw.hdl, EC_FALSE);
+    pecsd->hw.write(pecsd->hw.hdl, EC_REG_AL_EVENT_MASK, (void *)al_event_mask, sizeof(al_event_mask));
+    pecsd->hw.enable_int(pecsd->hw.hdl, EC_TRUE);
+}
+
+ec_void_t ecsd_reset_al_event_mask(struct ecsd *pecsd, uint32_t bits_to_reset) {
+    // Start al event mask.
+    uint32_t al_event_mask = 0u;
+    
+    pecsd->hw.read(pecsd->hw.hdl, EC_REG_AL_EVENT_MASK, (void *)al_event_mask, sizeof(al_event_mask));
+    al_event_mask &= ~bits_to_reset;
+    
+    pecsd->hw.enable_int(pecsd->hw.hdl, EC_FALSE);
+    pecsd->hw.write(pecsd->hw.hdl, EC_REG_AL_EVENT_MASK, (void *)al_event_mask, sizeof(al_event_mask));
+    pecsd->hw.enable_int(pecsd->hw.hdl, EC_TRUE);
+}
 
 ec_bool_t ecsd_sm_settings_0_and_1_match(struct ecsd *pecsd) {
     ec_bool_t ret = EC_TRUE;
