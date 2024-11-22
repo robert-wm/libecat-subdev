@@ -416,15 +416,8 @@ ec_retval_t ecsd_stop_local_output_handler(struct ecsd *pecsd) {
     return EC_OK;
 }
 
-//! \brief AL Control response function
-/*!
- * \param[in]   pecsd               Pointer to EtherCAT SubDevice structure.
- * \param[in]   al_state            AL state to be set.
- * \param[in]   al_status_code      AL status code in case of error.
- * \param[in]   al_error_flag       Error indication flag.
- * \param[in]   id_flag             ID response flag.
- */
-static ec_void_t ecsd_al_control_rsp(struct ecsd *pecsd, ec_uint8_t al_state, 
+// AL Control response function
+ec_void_t ecsd_al_control_rsp(struct ecsd *pecsd, ec_uint8_t al_state,
         ec_uint16_t al_status_code, ec_bool_t al_error_flag, ec_bool_t id_flag) 
 {
     ec_uint16_t al_status = 0u;
@@ -437,6 +430,11 @@ static ec_void_t ecsd_al_control_rsp(struct ecsd *pecsd, ec_uint8_t al_state,
     }
 
     pecsd->hw.write(pecsd->hw.hdl, EC_REG_AL_STATUS, (ec_uint8_t *)&al_status, sizeof(al_status));
+
+    pecsd->al_state = al_state;
+    pecsd->al_status_code = al_status_code;
+    pecsd->al_error_flag = al_error_flag;
+    pecsd->id_flag = id_flag;
 }
 
 ec_void_t ecsd_id_info(struct ecsd *pecsd, ec_bool_t id_request) {

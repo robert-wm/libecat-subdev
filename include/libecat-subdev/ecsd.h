@@ -129,6 +129,17 @@ ec_void_t ecsd_open(struct ecsd *pecsd, void *hw_hdl, ecsd_hw_read read_func,
 ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state, 
         ec_bool_t ack_flag, ec_bool_t id_request);
 
+//! \brief AL Control response function
+/*!
+ * \param[in]   pecsd               Pointer to EtherCAT SubDevice structure.
+ * \param[in]   al_state            AL state to be set.
+ * \param[in]   al_status_code      AL status code in case of error.
+ * \param[in]   al_error_flag       Error indication flag.
+ * \param[in]   id_flag             ID response flag.
+ */
+ec_void_t ecsd_al_control_rsp(struct ecsd *pecsd, ec_uint8_t al_state,
+        ec_uint16_t al_status_code, ec_bool_t al_error_flag, ec_bool_t id_flag);
+
 //! \brief Sync manager change event occured
 /*!
  * \param[in]   pecsd        Pointer to ECSD struture.
