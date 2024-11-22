@@ -30,10 +30,13 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include <unistd.h>
 
+#include <libecat-base/common.h>
 #include <libecat-subdev/settings.h>
 #include <libecat-subdev/ecsd.h>
 #include <libecat-subdev/hw.h>
+#include <libecat-subdev/coe.h>
 typedef enum ec_sm_direction {
     ecsd_sm_direction_read,      //!< \brief Read configuration  => ESC-read  <-> PDI-write
     ecsd_sm_direction_write      //!< \brief Write configuration => ESC-write <-> PDI-read
