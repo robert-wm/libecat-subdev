@@ -437,7 +437,34 @@ ec_bool_t ecsd_dc_activated(struct ecsd *pecsd) {
 ec_void_t ecsd_start_safeop_2_op_timeout_timer(struct ecsd *pecsd) {
 }
                 
+
+// Acknowledge SM change event by reading byte 6 of SM channels.
 ec_void_t ecsd_ack_sm_chg(struct ecsd *pecsd) {
+    uint16_t dummy;
+
+    for (int ch = 0; ch < 4; ++ch) {
+        pecsd->hw.read(pecsd->hw.hdl, EC_REG_SYNC_MANAGER_N(ch) + 0x6, (ec_uint8_t *)&dummy, 2u);
+    }
+}
+
+//! \brief Received PLL running event.
+ec_void_t ecsd_pll_running_event(struct ecsd *pecsd) {
+    if (pecsd->wait_for_pll_running) {
+        pecsd->wait_for_pll_running = EC_FALSE;
+
+        switch (pecsd->al_state) {
+            default:
+                break;
+            case EC_STATE_SAFEOP: {
+                ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_read, ecsd_sm_mode_enable);
+                ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_write, ecsd_sm_mode_enable);
+                ecsd_start_local_output_handler(pecsd);
+
+                ecsd_al_control_rsp(pecsd, EC_STATE_OP, 0, 0, 0);
+                break;
+            }
+        }
+    }
 }
 
 //! \brief AL control indication
