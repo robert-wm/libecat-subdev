@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if 0
 //! \brief copy bytes from ESC memory to local memory
 /*!
  * \param[in]   pecsd        Pointer to ESC struture.
@@ -16,7 +17,7 @@
  *
  * \return Number of bytes copied.
  */
-ec_size_t hw_read(struct ecsd *pecsd, ec_off_t adr, ec_uint8_t *buf, ec_size_t buf_len) {
+ec_size_t _hw_read(struct ecsd *pecsd, ec_off_t adr, ec_uint8_t *buf, ec_size_t buf_len) {
     assert(pecsd != NULL);
     assert(buf != NULL);
 
@@ -33,7 +34,7 @@ ec_size_t hw_read(struct ecsd *pecsd, ec_off_t adr, ec_uint8_t *buf, ec_size_t b
  *
  * \return Number of bytes copied.
  */
-ec_size_t hw_write(struct ecsd *pecsd, ec_off_t adr, ec_uint8_t *buf, ec_size_t buf_len) {
+ec_size_t _hw_write(struct ecsd *pecsd, ec_off_t adr, ec_uint8_t *buf, ec_size_t buf_len) {
     assert(pecsd != NULL);
     assert(buf != NULL);
 
@@ -49,7 +50,7 @@ ec_size_t hw_write(struct ecsd *pecsd, ec_off_t adr, ec_uint8_t *buf, ec_size_t 
  *
  * \retval  OK on success.
  */
-ec_uint32_t hw_open(struct ecsd *pecsd, void *ecsd_base, ec_uint16_t pdi_type) {
+ec_uint32_t _hw_open(struct ecsd *pecsd, void *ecsd_base, ec_uint16_t pdi_type) {
     assert(pecsd != NULL);
     assert(ecsd_base != NULL);
 
@@ -106,4 +107,5 @@ void hw_irq_sync1(struct ecsd *pecsd) {
     // handle DC Sync1 event
     ecsd_sync1(pecsd);
 }
+#endif
 

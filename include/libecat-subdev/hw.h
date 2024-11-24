@@ -36,34 +36,36 @@
 // forward declarations
 struct ecsd;
 
-struct hw {
-    ec_uint8_t *ecsd_base;
-
-    ec_bool_t sync0_mapped_to_al_status;
-    ec_bool_t sync1_mapped_to_al_status;
-};
-
 //! \brief copy bytes from ECSD memory to local memory
 /*!
- * \param[in]   pecsd        Pointer to ECSD struture.
+ * \param[in]   hw_hdl      Pointer to hardware handle.
  * \param[in]   adr         ECSD memory address to copy from.
  * \param[out]  buf         Target buffer to copy to.
  * \param[in]   buf_len     Length of target buffer.
  *
  * \return Number of bytes copied.
  */
-ec_size_t hw_read(struct ecsd *pecsd, ec_off_t adr, ec_uint8_t *buf, ec_size_t buf_len);
+typedef ec_size_t (*ecsd_hw_read)(void *hw_hdl, ec_off_t adr, ec_uint8_t *buf, ec_size_t buf_len);
 
 //! \brief copy bytes from local memory to ECSD memory
 /*!
- * \param[in]   pecsd        Pointer to ECSD struture.
+ * \param[in]   hw_hdl      Pointer to hardware handle.
  * \param[in]   adr         ECSD memory address to copy to.
  * \param[in]   buf         Target buffer to copy from.
  * \param[in]   buf_len     Length of target buffer.
  *
  * \return Number of bytes copied.
  */
-ec_size_t hw_write(struct ecsd *pecsd, ec_off_t adr, ec_uint8_t *buf, ec_size_t buf_len);
+typedef ec_size_t (*ecsd_hw_write)(void *hw_hdl, ec_off_t adr, ec_uint8_t *buf, ec_size_t buf_len);
+
+//! \brief Enable PDI interrupt in hardware.
+/*!
+ * \param[in]   hw_hdl      Pointer to hardware handle.
+ * \param[in]   enable      Flag indicating if irq should be enabled or disabled.
+ *
+ * \return Old enable state.
+ */
+typedef ec_uint32_t (*ecsd_hw_enable_int)(void *hw_hdl, ec_bool_t enable);
 
 //! \brief Opens and initializes ECSD hardware
 /*!
@@ -73,7 +75,26 @@ ec_size_t hw_write(struct ecsd *pecsd, ec_off_t adr, ec_uint8_t *buf, ec_size_t 
  *
  * \retval  OK on success.
  */
-ec_uint32_t hw_open(struct ecsd *pecsd, void *ecsd_base, ec_uint16_t pdi_type);
+typedef ec_uint32_t (*ecsd_hw_open)(struct ecsd *pecsd, void *ecsd_base, ec_uint16_t pdi_type);
+
+//! \brief Enable SyncX interrupt in hardware.
+/*!
+ * \param[in]   pecsd       Pointer to ECSD struture.
+ * \param[in]   enable      Flag indicating if irq should be enabled or disabled.
+ */
+typedef void (*ecsd_hw_enable_syncx)(struct ecsd *pecsd, ec_bool_t enable);
+
+struct hw {
+    void *hdl;
+    ecsd_hw_read read;
+    ecsd_hw_write write;
+    ecsd_hw_enable_int enable_int;
+    ecsd_hw_enable_syncx enable_sync0;
+    ecsd_hw_enable_syncx enable_sync1;
+
+    ec_bool_t sync0_mapped_to_al_status;
+    ec_bool_t sync1_mapped_to_al_status;
+};
 
 #endif // LIBECAT_SUBDEV_HW_H
 
