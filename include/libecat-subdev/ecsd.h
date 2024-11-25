@@ -40,6 +40,7 @@
 #include "settings.h"
 
 struct ec_object;
+struct ecsd_foe;
 
 struct mailbox {
     struct ec_slave_sm sm_receive;
@@ -78,6 +79,7 @@ struct ecsd {
     ec_bool_t dc_supported;                     //!< \brief Device supports at least one OpMode which uses Distributed Clocks
 
     ec_int32_t dc_counter;
+    ec_bool_t outputs_update_running;
 
     ec_uint16_t local_error_code;               //!< \brief Original reason of a previous local error which resulted in disabeling
                                                 // SyncManager channels
@@ -166,6 +168,22 @@ ec_void_t ecsd_sm_chg(struct ecsd *pecsd);
  * \param[in]   pecsd        Pointer to ECSD struture.
  */
 ec_void_t ecsd_pll_running_event(struct ecsd *pecsd);
+
+//! \brief Updating inputs 
+/*!
+ * \param[in]   pecsd               Pointer to EtherCAT SubDevice structure.
+ *
+ * \retval EC_OK    On success.
+ */
+ec_retval_t ecsd_user_input_update(struct ecsd *pecsd);
+
+//! \brief Updating outputs 
+/*!
+ * \param[in]   pecsd               Pointer to EtherCAT SubDevice structure.
+ *
+ * \retval EC_OK    On success.
+ */
+ec_retval_t ecsd_user_output_update(struct ecsd *pecsd);
 
 ec_void_t ecsd_sync0(struct ecsd *pecsd);
 ec_void_t ecsd_sync1(struct ecsd *pecsd);

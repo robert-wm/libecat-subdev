@@ -37,6 +37,9 @@
 #include <libecat-subdev/ecsd.h>
 #include <libecat-subdev/hw.h>
 #include <libecat-subdev/coe.h>
+
+#include "object_dict.h"
+
 typedef enum ec_sm_direction {
     ecsd_sm_direction_read,      //!< \brief Read configuration  => ESC-read  <-> PDI-write
     ecsd_sm_direction_write      //!< \brief Write configuration => ESC-write <-> PDI-read
@@ -61,8 +64,24 @@ static ec_void_t ecsd_configure_sm_channels_pd(struct ecsd *pecsd, ecsd_sm_direc
 static ec_retval_t ecsd_start_input_handler(struct ecsd *pecsd);
 static ec_retval_t ecsd_stop_input_handler(struct ecsd *pecsd);
 static ec_retval_t ecsd_start_local_output_handler(struct ecsd *pecsd);
-static ec_retval_t ecsd_stop_local_output_handler(struct ecsd *pecsd);
+ec_retval_t ecsd_stop_local_output_handler(struct ecsd *pecsd);
 ec_void_t ecsd_ack_sm_chg(struct ecsd *pecsd);
+
+//! \brief Updating inputs 
+/*!
+ * \param[in]   pecsd               Pointer to EtherCAT SubDevice structure.
+ *
+ * \retval EC_OK    On success.
+ */
+static ec_retval_t ecsd_input_update(struct ecsd *pecsd);
+
+//! \brief Updating outputs 
+/*!
+ * \param[in]   pecsd               Pointer to EtherCAT SubDevice structure.
+ *
+ * \retval EC_OK    On success. 
+ */
+static ec_retval_t ecsd_output_update(struct ecsd *pecsd);
 
 //! \brief Opens and initializes EtherCAT SubDev
 /*!
@@ -95,6 +114,7 @@ ec_void_t ecsd_open(struct ecsd *pecsd, void *hw_hdl, ecsd_hw_read read_func,
     pecsd->dc_running                  = EC_FALSE;
     pecsd->dc_supported                = EC_FALSE;
     pecsd->dc_counter                  = 0;
+    pecsd->outputs_update_running      = EC_FALSE;
     pecsd->local_error_code            = 0u;
     pecsd->local_error_flag            = EC_FALSE;
     pecsd->pll_running                 = EC_FALSE;
@@ -112,7 +132,7 @@ ec_void_t ecsd_open(struct ecsd *pecsd, void *hw_hdl, ecsd_hw_read read_func,
 
 ec_void_t ecsd_set_al_event_mask(struct ecsd *pecsd, uint32_t bits_to_set) {
     // Start al event mask.
-    uint32_t al_event_mask = 0u;
+    uint16_t al_event_mask = 0u;
 
     pecsd->hw.read(pecsd->hw.hdl, EC_REG_AL_EVENT_MASK, (void *)&al_event_mask, sizeof(al_event_mask));
     al_event_mask |= bits_to_set;
@@ -124,7 +144,7 @@ ec_void_t ecsd_set_al_event_mask(struct ecsd *pecsd, uint32_t bits_to_set) {
 
 ec_void_t ecsd_reset_al_event_mask(struct ecsd *pecsd, uint32_t bits_to_reset) {
     // Start al event mask.
-    uint32_t al_event_mask = 0u;
+    uint16_t al_event_mask = 0u;
     
     pecsd->hw.read(pecsd->hw.hdl, EC_REG_AL_EVENT_MASK, (void *)&al_event_mask, sizeof(al_event_mask));
     al_event_mask &= ~bits_to_reset;
@@ -361,7 +381,7 @@ ec_void_t ecsd_configure_sm_channels_pd(struct ecsd *pecsd, ecsd_sm_direction_t 
  */
 ec_retval_t ecsd_start_input_handler(struct ecsd *pecsd) {
     // dc checks
-    uint16_t al_event_mask = 0x0000080C;
+    uint16_t al_event_mask = 0x00000804;
     uint16_t dc_control[2];
     pecsd->hw.read(pecsd->hw.hdl, EC_REG_DC_CYCLIC_UNIT_CONTROL_ACT, (void *)&dc_control[0], 2 * sizeof(uint16_t));
 
@@ -405,14 +425,18 @@ ec_retval_t ecsd_stop_input_handler(struct ecsd *pecsd) {
 
 ec_retval_t ecsd_start_local_output_handler(struct ecsd *pecsd) {
     // Start al event on corresponding Sync Manager 2
-    ecsd_set_al_event_mask(pecsd, 0x00000400);
+    // not needed when using SYNC0:
+    //ecsd_set_al_event_mask(pecsd, 0x00000400);
 
     return EC_OK;
 }
 
 ec_retval_t ecsd_stop_local_output_handler(struct ecsd *pecsd) {
     // Stop al event on corresponding Sync Manager 2
-    ecsd_reset_al_event_mask(pecsd, 0x00000400);
+    // not needed when using SYNC0:
+    //ecsd_reset_al_event_mask(pecsd, 0x00000400);
+
+    pecsd->outputs_update_running = EC_FALSE;
 
     return EC_OK;
 }
@@ -467,6 +491,8 @@ ec_void_t ecsd_pll_running_event(struct ecsd *pecsd) {
             default:
                 break;
             case EC_STATE_SAFEOP: {
+                pecsd->dc_counter = 0;
+
                 ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_read, ecsd_sm_mode_enable);
                 ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_write, ecsd_sm_mode_enable);
                 ecsd_start_local_output_handler(pecsd);
@@ -679,6 +705,7 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                                 ec_log(100, __func__, "Transition #14.1, switching to SAFEOP.\n");
 
                                 pecsd->dc_running = EC_FALSE;
+                                pecsd->dc_counter = 0;
                                 pecsd->al_error_flag = EC_FALSE;
                                 pecsd->al_status_code = 0;
                                 pecsd->al_state = EC_STATE_SAFEOP;
@@ -690,6 +717,7 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                                 ec_log(100, __func__, "Transition #14.2, switching to SAFEOP.\n");
 
                                 pecsd->dc_running = EC_TRUE;
+                                pecsd->dc_counter = 0;
                                 pecsd->al_error_flag = EC_FALSE;
                                 pecsd->al_status_code = 0;
                                 pecsd->al_state = EC_STATE_SAFEOP;
@@ -701,6 +729,7 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                                 // #14.3
                                 ec_log(100, __func__, "Transition #14.3, switching to SAFEOP.\n");
 
+                                pecsd->dc_counter = 0;
                                 pecsd->id_flag = EC_FALSE;
                                 pecsd->al_status_code = EC_AL_STATUS_CODE__INVALID_DC_SYNC_CONFIGURATION;
                                 pecsd->al_error_flag = EC_TRUE;
@@ -834,6 +863,7 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                                 // #26.2
                                 ec_log(100, __func__, "Transition #26.2, switching to OP.\n");
 
+                                pecsd->dc_counter = 0;
                                 pecsd->al_error_flag = EC_FALSE;
                                 pecsd->al_status_code = 0u;
                                 pecsd->al_state = EC_STATE_OP;
@@ -849,6 +879,7 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
 
                                 ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_write, ecsd_sm_mode_enable);
 
+                                pecsd->dc_counter = 0;
                                 pecsd->wait_for_pll_running = EC_TRUE;
 
                                 ecsd_start_safeop_2_op_timeout_timer(pecsd);
@@ -1232,8 +1263,60 @@ ec_retval_t ecsd_al_state_change_req(struct ecsd *pecsd, ec_uint8_t al_state, ec
     return EC_OK;
 }
 
+//! \brief Updating inputs 
+/*!
+ * \param[in]   pecsd               Pointer to EtherCAT SubDevice structure.
+ *
+ * \retval EC_OK    On success.
+ */
+ec_retval_t __attribute__((weak)) ecsd_user_input_update(struct ecsd *pecsd) {
+    return EC_OK;
+}
+
+//! \brief Updating inputs 
+/*!
+ * \param[in]   pecsd               Pointer to EtherCAT SubDevice structure.
+ *
+ * \retval EC_OK    On success.
+ */
+ec_retval_t ecsd_input_update(struct ecsd *pecsd) {
+    ec_retval_t ret = EC_OK;
+
+    ret = ecsd_user_input_update(pecsd);
+
+    return ret;
+}
+
+//! \brief Updating outputs 
+/*!
+ * \param[in]   pecsd               Pointer to EtherCAT SubDevice structure.
+ *
+ * \retval EC_OK    On success. 
+ */
+ec_retval_t __attribute__((weak)) ecsd_user_output_update(struct ecsd *pecsd) {
+    return EC_OK;
+}
+
+//! \brief Updating outputs 
+/*!
+ * \param[in]   pecsd               Pointer to EtherCAT SubDevice structure.
+ *
+ * \retval EC_OK    On success. 
+ */
+ec_retval_t ecsd_output_update(struct ecsd *pecsd) {
+    ec_retval_t ret = EC_OK;
+
+    ret = ecsd_user_output_update(pecsd);
+
+    return ret;
+}
+
+
 ec_void_t ecsd_sync0(struct ecsd *pecsd) {
     pecsd->dc_running = EC_TRUE;
+
+    ecsd_pll_running_event(pecsd);
+
     pecsd->dc_counter++;
 
     //ec_uint32_t al_event;
@@ -1263,18 +1346,21 @@ ec_void_t ecsd_sync0(struct ecsd *pecsd) {
 //    }
 
 
-    ecsd_input_mapping(pecsd);
+    ecsd_input_update(pecsd);
     pecsd->hw.write(pecsd->hw.hdl, pecsd->pdinputs.address, &pecsd->pdinputs_data[0], pecsd->pdinputs.length);
 }
 
 ec_void_t ecsd_sync1(struct ecsd *pecsd) {
+
 }
 
 ec_void_t ecsd_pdo(struct ecsd *pecsd) {
 }
 
+
 ec_void_t ecsd_pdi(struct ecsd *pecsd) {
     pecsd->ready_for_op                = EC_TRUE;
+
     ec_uint32_t al_event;
     pecsd->hw.read(pecsd->hw.hdl, EC_REG_AL_EVENT_MASK, (void *)&al_event, 4);
 
@@ -1283,8 +1369,9 @@ ec_void_t ecsd_pdi(struct ecsd *pecsd) {
     if (al_event & EC_REG_AL_EVENT_REQUEST__SM_INTERRUPT__SM_MASK(2)) {
         // output event
         pecsd->dc_counter = 0;
+        pecsd->outputs_update_running = EC_TRUE;
         pecsd->hw.read(pecsd->hw.hdl, pecsd->pdoutputs.address, &pecsd->pdoutputs_data[0], pecsd->pdoutputs.length);
-        ecsd_output_mapping(pecsd);
+        ecsd_output_update(pecsd);
     }
 
 //    if (al_event & EC_REG_AL_EVENT_REQUEST__SM_INTERRUPT__SM_MASK(3)) {
