@@ -32,8 +32,6 @@
 #define LIBECAT_SUBDEV_FOE_H
 
 #include <stdint.h>
-#include <libecat-subdev/mailbox.h>
-#include <libecat-subdev/ecsd.h>
 #include <libecat-base/types.h>
 //#include <libecat-base/foe.h>
 
@@ -54,6 +52,9 @@ struct ecsd_foe {
 
 struct ec_foe_service_data {
 };
+
+// forward declarations
+struct ecsd;
 
 //! \brief 
 /*!
