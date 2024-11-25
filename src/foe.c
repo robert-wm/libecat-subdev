@@ -28,8 +28,8 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include <libecat-base/object.h>
-#include <libecat-subdev/coe.h>
+#include <libecat-subdev/foe.h>
+#include <libecat-subdev/ecsd.h>
 
 #include <assert.h>
 #include <stddef.h>
@@ -38,7 +38,7 @@
 /*!
  * Refer to Service Definition ETG.1000.5
  */
-ec_retval_t ecsd_foe_mailbox_write_ind(struct ecsd *pecsd, struct ec_foe_service_data *mbx) {
+ec_retval_t __attribute__((weak)) ecsd_foe_mailbox_write_ind(struct ecsd *pecsd, struct ec_foe_service_data *mbx) {
     ec_retval_t ret = EC_OK;
 
     return ret;
@@ -48,7 +48,7 @@ ec_retval_t ecsd_foe_mailbox_write_ind(struct ecsd *pecsd, struct ec_foe_service
 /*!
  * Refer to Service Definition ETG.1000.5
  */
-ec_retval_t ecsd_foe_mailbox_read_ind(struct ecsd *pecsd, struct ec_foe_service_data *mbx) {
+ec_retval_t __attribute__((weak)) ecsd_foe_mailbox_read_ind(struct ecsd *pecsd, struct ec_foe_service_data *mbx) {
     ec_retval_t ret = EC_OK;
 
     return ret;
@@ -58,7 +58,7 @@ ec_retval_t ecsd_foe_mailbox_read_ind(struct ecsd *pecsd, struct ec_foe_service_
 /*!
  * Refer to Service Definition ETG.1000.5
  */
-ec_retval_t ecsd_foe_mailbox_data_ind(struct ecsd *pecsd, struct ec_foe_service_data *mbx) {
+ec_retval_t __attribute__((weak)) ecsd_foe_mailbox_data_ind(struct ecsd *pecsd, struct ec_foe_service_data *mbx) {
     ec_retval_t ret = EC_OK;
 
     return ret;
@@ -68,7 +68,7 @@ ec_retval_t ecsd_foe_mailbox_data_ind(struct ecsd *pecsd, struct ec_foe_service_
 /*!
  * Refer to Service Definition ETG.1000.5
  */
-ec_retval_t ecsd_foe_mailbox_ack_ind(struct ecsd *pecsd, struct ec_foe_service_data *mbx) {
+ec_retval_t __attribute__((weak)) ecsd_foe_mailbox_ack_ind(struct ecsd *pecsd, struct ec_foe_service_data *mbx) {
     ec_retval_t ret = EC_OK;
 
     return ret;
@@ -78,7 +78,7 @@ ec_retval_t ecsd_foe_mailbox_ack_ind(struct ecsd *pecsd, struct ec_foe_service_d
 /*!
  * Refer to Service Definition ETG.1000.5
  */
-ec_retval_t ecsd_foe_mailbox_error_ind(struct ecsd *pecsd, struct ec_foe_service_data *mbx) {
+ec_retval_t __attribute__((weak)) ecsd_foe_mailbox_error_ind(struct ecsd *pecsd, struct ec_foe_service_data *mbx) {
     ec_retval_t ret = EC_OK;
 
     return ret;
