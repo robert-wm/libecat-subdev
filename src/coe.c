@@ -590,6 +590,9 @@ ec_retval_t ecsd_coe_sdo_info_service_ind(struct ecsd *pecsd, struct ec_coe_sdo_
 
                         ec_size_t entry_byte_size = (entry->bit_length + 7u) / 8u;
                         ec_size_t data_len = 0u;
+      
+                        mbx_entry_desc_resp->value_info = 0u;
+#if 0
                         if (mbx_entry_desc_req->value_info & EC_COE_SDO_INFO_ENTRY_DESC__VALUE_INFO__UNIT) {
                             // TODO insert unit at &mbx_desc_resp->data[data_len]
                             data_len += 4u;
@@ -609,6 +612,7 @@ ec_retval_t ecsd_coe_sdo_info_service_ind(struct ecsd *pecsd, struct ec_coe_sdo_
                             // TODO insert max value at &mbx_desc_resp->data[data_len]
                             data_len += entry_byte_size;
                         }
+#endif
 
                         ec_size_t name_len = strlen(entry->name);
                         mbx->mailbox_hdr.length = 16 + data_len + name_len;
