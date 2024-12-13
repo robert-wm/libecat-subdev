@@ -402,8 +402,21 @@ ec_retval_t ecsd_start_input_handler(struct ecsd *pecsd) {
     pecsd->hw.read(pecsd->hw.hdl, EC_REG_SYNC_MANAGER_2, (ec_uint8_t *)&pecsd->pdoutputs, sizeof(pecsd->pdoutputs));
     pecsd->hw.read(pecsd->hw.hdl, EC_REG_SYNC_MANAGER_3, (ec_uint8_t *)&pecsd->pdinputs, sizeof(pecsd->pdinputs));
 
+    // enable both sm channel
+    if ((pecsd->pdinputs.activate & EC_REG_SYNC_MANAGER__ACTIVATE__ENABLE_SM) != 0u) {
+        ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_read, ecsd_sm_mode_enable);
+    }
+
+    if ((pecsd->pdoutputs.activate & EC_REG_SYNC_MANAGER__ACTIVATE__ENABLE_SM) != 0u) {
+        ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_write, ecsd_sm_mode_enable);
+    }
+
     // Start al event on corresponding Sync Manager 3.
     ecsd_set_al_event_mask(pecsd, al_event_mask);
+
+    // Write initial input data
+    ecsd_input_update(pecsd);
+    pecsd->hw.write(pecsd->hw.hdl, pecsd->pdinputs.address, &pecsd->pdinputs_data[0], pecsd->pdinputs.length);
 
     return EC_OK;
 }
