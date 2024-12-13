@@ -37,6 +37,8 @@
 #include <stddef.h>
 #include <string.h>
 
+#ifdef ECSD_MAILBOX_COE_SUPPORT
+
 // forward declarations
 
 //! \brief CoE Mailbox error reply.
@@ -146,7 +148,7 @@ ec_retval_t ecsd_coe_sdo_download_expedited_ind(struct ecsd *pecsd, struct ec_co
     ec_size_t   data_set_size   = 4u - EC_COE_SDO_HDR__DATA_SET_SIZE(&mbx->sdo_hdr);
     ec_uint8_t *data            = &mbx->data[0];
 
-    if (object_get(index, &obj) == OBJECT_OK) {
+    if (object_get(index, &obj) != OBJECT_OK) {
         // ERROR object index not found
         abort_code = OBJECT_ERROR__OBJECT_DOES_NOT_EXIST;
     } else {
@@ -195,7 +197,7 @@ ec_retval_t ecsd_coe_sdo_download_normal_ind(struct ecsd *pecsd, struct ec_coe_s
     ec_size_t   complete_size   = mbx->complete_size;
     ec_uint8_t *data            = &mbx->data[4];
 
-    if (object_get(index, &obj) == OBJECT_OK) {
+    if (object_get(index, &obj) != OBJECT_OK) {
         // ERROR object index not found
         abort_code = OBJECT_ERROR__OBJECT_DOES_NOT_EXIST;
     } else {
@@ -248,9 +250,6 @@ ec_retval_t ecsd_coe_sdo_upload_expedited_ind(struct ecsd *pecsd, struct ec_coe_
 
     struct ec_coe_sdo_upload_expedited_resp *mbx_resp = (struct ec_coe_sdo_upload_expedited_resp *)mbx;
 
-    if (index == 0x1600) {
-        obj = NULL;
-    }
     if (object_get(index, &obj) != OBJECT_OK) {
         // ERROR object index not found
         abort_code = OBJECT_ERROR__OBJECT_DOES_NOT_EXIST;
@@ -347,6 +346,7 @@ ec_retval_t ecsd_coe_sdo_upload_normal_ind(struct ecsd *pecsd, struct ec_coe_sdo
     EC_COE_SDO_HDR__COMMAND__SET(&mbx_resp->sdo_hdr, EC_COE_SDO_HDR__COMMAND__UPLOAD_RESPONSE);
 
     mbx_resp->complete_size = complete_size;
+    mbx_resp->mailbox_hdr.length = 10 + 4 + complete_size;
 
     ecsd_coe_mailbox_read_upd_req(pecsd, (struct ec_mailbox *)mbx_resp);
 
@@ -838,3 +838,5 @@ ec_retval_t ecsd_coe_mailbox_stop(struct ecsd *pecsd) {
 
     return 0;
 }
+
+#endif /* ECSD_MAILBOX_COE_SUPPORT */
