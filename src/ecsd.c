@@ -441,6 +441,17 @@ ec_retval_t ecsd_stop_local_output_handler(struct ecsd *pecsd) {
     return EC_OK;
 }
 
+// AL Control response function (Application specific, implement this)
+ec_void_t __attribute__((weak)) ecsd_user_al_control_rsp(struct ecsd *pecsd, ec_uint8_t al_state,
+        ec_uint16_t al_status_code, ec_bool_t al_error_flag, ec_bool_t id_flag)
+{
+    (void)pecsd;
+    (void)al_state;
+    (void)al_status_code;
+    (void)al_error_flag;
+    (void)id_flag;
+}
+
 // AL Control response function
 ec_void_t ecsd_al_control_rsp(struct ecsd *pecsd, ec_uint8_t al_state,
         ec_uint16_t al_status_code, ec_bool_t al_error_flag, ec_bool_t id_flag) 
@@ -460,6 +471,8 @@ ec_void_t ecsd_al_control_rsp(struct ecsd *pecsd, ec_uint8_t al_state,
     pecsd->al_status_code = al_status_code;
     pecsd->al_error_flag = al_error_flag;
     pecsd->id_flag = id_flag;
+
+    ecsd_user_al_control_rsp(pecsd, al_state, al_status_code, al_error_flag, id_flag);
 }
 
 ec_void_t ecsd_id_info(struct ecsd *pecsd, ec_bool_t id_request) {
