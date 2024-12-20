@@ -145,7 +145,7 @@ ec_retval_t ecsd_coe_sdo_download_expedited_ind(struct ecsd *pecsd, struct ec_co
     ec_bool_t   complete_access = EC_COE_SDO_HDR__COMPLETE_ACCESS(&mbx->sdo_hdr);
     ec_uint16_t index           = mbx->sdo_hdr.index;
     ec_uint8_t  sub_index       = mbx->sdo_hdr.sub_index;
-    ec_size_t   data_set_size   = 4u - EC_COE_SDO_HDR__DATA_SET_SIZE(&mbx->sdo_hdr);
+    ec_size_t   data_set_size   = EC_COE_SDO_HDR__DATA_SET_SIZE(&mbx->sdo_hdr);
     ec_uint8_t *data            = &mbx->data[0];
 
     if (object_get(index, &obj) != OBJECT_OK) {
