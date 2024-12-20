@@ -371,6 +371,16 @@ ec_void_t ecsd_configure_sm_channels_pd(struct ecsd *pecsd, ecsd_sm_direction_t 
     }
 }
 
+//! \brief Updating inputs 
+/*!
+ * \param[in]   pecsd               Pointer to EtherCAT SubDevice structure.
+ *
+ * \retval EC_OK    On success.
+ */
+ec_retval_t __attribute__((weak)) ecsd_user_start_input_handler(struct ecsd *pecsd) {
+    return EC_OK;
+}
+
 //! \brief Start input update.
 /*!
  * PREOP->SAFEOP: 
@@ -380,6 +390,8 @@ ec_void_t ecsd_configure_sm_channels_pd(struct ecsd *pecsd, ecsd_sm_direction_t 
  * \param[in]   pecsd        Pointer to ESC struture.
  */
 ec_retval_t ecsd_start_input_handler(struct ecsd *pecsd) {
+    ec_retval_t ret = EC_OK;
+
     // dc checks
     uint16_t al_event_mask = 0x00000804;
     uint16_t dc_control[2];
@@ -411,14 +423,19 @@ ec_retval_t ecsd_start_input_handler(struct ecsd *pecsd) {
         ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_write, ecsd_sm_mode_enable);
     }
 
-    // Start al event on corresponding Sync Manager 3.
-    ecsd_set_al_event_mask(pecsd, al_event_mask);
+    // User dependend input hanlder start
+    ret = ecsd_user_start_input_handler(pecsd);
 
-    // Write initial input data
-    ecsd_input_update(pecsd);
-    pecsd->hw.write(pecsd->hw.hdl, pecsd->pdinputs.address, &pecsd->pdinputs_data[0], pecsd->pdinputs.length);
+    if (ret == EC_OK) {
+        // Start al event on corresponding Sync Manager 3.
+        ecsd_set_al_event_mask(pecsd, al_event_mask);
 
-    return EC_OK;
+        // Write initial input data
+        ecsd_input_update(pecsd);
+        pecsd->hw.write(pecsd->hw.hdl, pecsd->pdinputs.address, &pecsd->pdinputs_data[0], pecsd->pdinputs.length);
+    }
+
+    return ret;
 }
 
 ec_retval_t ecsd_stop_input_handler(struct ecsd *pecsd) {
@@ -736,7 +753,15 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                                 pecsd->al_status_code = 0;
                                 pecsd->al_state = EC_STATE_SAFEOP;
 
-                                (void)ecsd_start_input_handler(pecsd);
+                                ec_retval_t local_ret = ecsd_start_input_handler(pecsd);
+                                if (local_ret != EC_OK) {
+                                    ec_log(100, __func__, "Transition #14.1, mapping ERROR stay in PREOP.\n");
+
+                                    pecsd->al_error_flag = EC_TRUE;
+                                    pecsd->al_status_code = local_ret;
+                                    pecsd->al_state = EC_STATE_PREOP;
+                                }
+
                                 ecsd_id_info(pecsd, id_request);
                             } else if ((ecsd_dc_activated(pecsd) == EC_TRUE) && (pecsd->dc_not_accepted == EC_FALSE) && (pecsd->dc_supported == EC_TRUE)) {
                                 // #14.2
@@ -748,7 +773,15 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                                 pecsd->al_status_code = 0;
                                 pecsd->al_state = EC_STATE_SAFEOP;
 
-                                (void)ecsd_start_input_handler(pecsd);
+                                ec_retval_t local_ret = ecsd_start_input_handler(pecsd);
+                                if (local_ret != EC_OK) {
+                                    ec_log(100, __func__, "Transition #14.1, mapping ERROR stay in PREOP.\n");
+
+                                    pecsd->al_error_flag = EC_TRUE;
+                                    pecsd->al_status_code = local_ret;
+                                    pecsd->al_state = EC_STATE_PREOP;
+                                }
+
                                 ecsd_id_info(pecsd, id_request);
                             } else if ( ((ecsd_dc_activated(pecsd) == EC_TRUE) && (pecsd->dc_not_accepted == EC_TRUE)) ||
                                     ((ecsd_dc_activated(pecsd) == EC_FALSE) && (pecsd->dc_required == EC_TRUE)) ) {
