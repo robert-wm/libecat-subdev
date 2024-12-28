@@ -195,7 +195,7 @@ ec_retval_t ecsd_coe_sdo_download_normal_ind(struct ecsd *pecsd, struct ec_coe_s
     ec_uint16_t index           = mbx->sdo_hdr.index;
     ec_uint8_t  sub_index       = mbx->sdo_hdr.sub_index;
     ec_size_t   complete_size   = mbx->complete_size;
-    ec_uint8_t *data            = &mbx->data[4];
+    ec_uint8_t *data            = &mbx->data[0];
 
     if (object_get(index, &obj) != OBJECT_OK) {
         // ERROR object index not found
@@ -225,8 +225,13 @@ ec_retval_t ecsd_coe_sdo_download_normal_ind(struct ecsd *pecsd, struct ec_coe_s
     
     mbx->sdo_hdr.hdr = 0u;
     EC_COE_SDO_HDR__COMMAND__SET(&mbx->sdo_hdr, EC_COE_SDO_HDR__COMMAND__DOWNLOAD_RESPONSE);
+    
+    mbx->mailbox_hdr.length = 10;
+
+    pecsd->mbx.coe.state = COE_STATE_DWLN;
 
     ecsd_coe_mailbox_read_upd_req(pecsd, (struct ec_mailbox *)mbx);
+    pecsd->mbx.coe.state = COE_STATE_WUPD;
 
     return ret;
 }
@@ -393,6 +398,7 @@ ec_retval_t ecsd_coe_sdo_request(struct ecsd *pecsd, struct ec_coe_sdo_request *
                 } else {
                     // #10
                     ecsd_coe_sdo_download_normal_ind(pecsd, (struct ec_coe_sdo_download_normal_req *)mbx);
+                    pecsd->mbx.coe.state = COE_STATE_WUPD;
                 }
             }
             break;
@@ -588,7 +594,7 @@ ec_retval_t ecsd_coe_sdo_info_service_ind(struct ecsd *pecsd, struct ec_coe_sdo_
                         mbx_entry_desc_resp->bit_length = entry->bit_length;
                         mbx_entry_desc_resp->obj_access = entry->access;
 
-                        ec_size_t entry_byte_size = (entry->bit_length + 7u) / 8u;
+//                        ec_size_t entry_byte_size = (entry->bit_length + 7u) / 8u;
                         ec_size_t data_len = 0u;
       
                         mbx_entry_desc_resp->value_info = 0u;
