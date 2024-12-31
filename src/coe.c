@@ -517,7 +517,7 @@ ec_retval_t ecsd_coe_sdo_info_service_odlist_ind(struct ecsd *pecsd, struct ec_c
     } else {
         // start sending odlist
         int obj_cnt = object_cnt(1);
-        size_t data_size = pecsd->mbx.sm_send.length - 6 - 8 - 2;
+        size_t data_size = pecsd->mbx.sm_send.length - 6 - 6 - 2;
 
         if (obj_cnt > (data_size / 2)) {
             // need fragments;
@@ -528,7 +528,7 @@ ec_retval_t ecsd_coe_sdo_info_service_odlist_ind(struct ecsd *pecsd, struct ec_c
         pecsd->mbx.coe.odlist_start_after = 0x0FFF; // start with 0x1000
         data_size = object_get_list(1, &pecsd->mbx.coe.odlist_start_after, (uint16_t *)&mbx_odlist_resp->data[2], data_size);
 
-        mbx_odlist_resp->mailbox_hdr.length = 6 + data_size;
+        mbx_odlist_resp->mailbox_hdr.length = 6 + 2 + data_size;
     }
 
 
