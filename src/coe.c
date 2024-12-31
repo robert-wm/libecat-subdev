@@ -706,6 +706,8 @@ ec_retval_t ecsd_coe_mailbox_write_ind(struct ecsd *pecsd, struct ec_coe_service
 
             break;
         }
+        default:
+            break;
     }
 
     return ret;
@@ -778,6 +780,9 @@ ec_retval_t ecsd_coe_mailbox_read_upd_cnf(struct ecsd *pecsd, ec_bool_t success)
  * Refer to Service Definition ETG.1000.3
  */
 ec_retval_t ecsd_coe_mailbox_start(struct ecsd *pecsd) {
+    pecsd->mbx.coe.fragments_left = 0;
+    pecsd->mbx.coe.seg = 0x0u;
+
     switch (pecsd->mbx.coe.state) {
         case COE_STATE_OFF: {
             pecsd->mbx.coe.seg   = 0u;
