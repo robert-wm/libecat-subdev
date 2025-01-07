@@ -79,6 +79,10 @@ struct ecsd {
     ec_bool_t dc_supported;                     //!< \brief Device supports at least one OpMode which uses Distributed Clocks
 
     ec_int32_t dc_counter;
+
+    ec_uint32_t dc_sync0_cycle_time;
+    ec_uint32_t dc_sync1_cycle_time;
+
     ec_bool_t outputs_update_running;
 
     ec_uint16_t local_error_code;               //!< \brief Original reason of a previous local error which resulted in disabeling

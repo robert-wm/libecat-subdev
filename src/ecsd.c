@@ -114,6 +114,8 @@ ec_void_t ecsd_open(struct ecsd *pecsd, void *hw_hdl, ecsd_hw_read read_func,
     pecsd->dc_running                  = EC_FALSE;
     pecsd->dc_supported                = EC_FALSE;
     pecsd->dc_counter                  = 0;
+    pecsd->dc_sync0_cycle_time         = 0;
+    pecsd->dc_sync1_cycle_time         = 0;;
     pecsd->outputs_update_running      = EC_FALSE;
     pecsd->local_error_code            = 0u;
     pecsd->local_error_flag            = EC_FALSE;
@@ -401,6 +403,9 @@ ec_retval_t ecsd_start_input_handler(struct ecsd *pecsd) {
         // Sync out unit activation configured by maindevice.
         ec_bool_t dc_sync0_generation = (dc_control[0] & EC_REG_DC_CYCLIC_UNIT_CONTROL_ACT__SYNC0_GENERATION) ? 1 : 0;
         ec_bool_t dc_sync1_generation = (dc_control[0] & EC_REG_DC_CYCLIC_UNIT_CONTROL_ACT__SYNC1_GENERATION) ? 1 : 0;
+
+        pecsd->hw.read(pecsd->hw.hdl, EC_REG_DC_SYNC0_CYCLE_TIME, (ec_uint8_t *)&pecsd->dc_sync0_cycle_time, sizeof(pecsd->dc_sync0_cycle_time));
+        pecsd->hw.read(pecsd->hw.hdl, EC_REG_DC_SYNC1_CYCLE_TIME, (ec_uint8_t *)&pecsd->dc_sync1_cycle_time, sizeof(pecsd->dc_sync1_cycle_time));
 
         if (dc_sync0_generation && pecsd->hw.enable_sync0) {
             pecsd->hw.enable_sync0(pecsd, EC_TRUE);
