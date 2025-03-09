@@ -86,7 +86,7 @@ ec_retval_t __attribute__((weak)) ecsd_foe_mailbox_write_ind(struct ecsd *pecsd,
                 // #7
                 struct ec_foe_write_request *mbx_wr = (struct ec_foe_write_request *)mbx;
                 pecsd->mbx.foe.state = FOE_STATE_DWLS;
-                
+
                 // reuse repeat mbx buffer for temporary filename storage
                 memcpy(&pecsd->mbx.foe.repeat_mbx_buffer[0], mbx_wr->filename, mbx_wr->mailbox_hdr.length - 6);
                 pecsd->mbx.foe.repeat_mbx_buffer[mbx_wr->mailbox_hdr.length - 6] = '\0';
@@ -107,7 +107,7 @@ ec_retval_t __attribute__((weak)) ecsd_foe_mailbox_write_ind(struct ecsd *pecsd,
                 // #9
                 struct ec_foe_read_request *mbx_rr = (struct ec_foe_read_request *)mbx;
                 pecsd->mbx.foe.state = FOE_STATE_UPLS;
-                
+
                 // reuse repeat mbx buffer for temporary filename storage
                 memcpy(&pecsd->mbx.foe.repeat_mbx_buffer[0], mbx_rr->filename, mbx_rr->mailbox_hdr.length - 6);
                 pecsd->mbx.foe.repeat_mbx_buffer[mbx_rr->mailbox_hdr.length - 6] = '\0';
@@ -126,7 +126,7 @@ ec_retval_t __attribute__((weak)) ecsd_foe_mailbox_write_ind(struct ecsd *pecsd,
     return ret;
 }
 
-ec_retval_t ecsd_foe_mailbox_read_upd_cnf(struct ecsd *pecsd, ec_bool_t success) {
+ec_retval_t ecsd_foe_read_upd_cnf(struct ecsd *pecsd, ec_bool_t success) {
     ec_retval_t ret = EC_OK;
 
     switch (pecsd->mbx.foe.state) {
@@ -135,26 +135,42 @@ ec_retval_t ecsd_foe_mailbox_read_upd_cnf(struct ecsd *pecsd, ec_bool_t success)
             // ignore
             break;
         }
+        case FOE_STATE_UWUPD: {
+            // #26
+            pecsd->mbx.foe.state = FOE_STATE_UWSEG;
+            break;
+        }
+        case FOE_STATE_DWUPD: {
+            // #34
+            pecsd->mbx.foe.state = FOE_STATE_DWSEG;
+            break;
+        }
+        default: {
+            // ignore
+            break;
+        }
     }
 
     return ret;
 }
 
-ec_retval_t ecsd_foe_mailbox_error_request(struct ecsd *pecsd, struct ec_mailbox *mbx, ec_uint32_t error_code, ec_char_t *error_text) {
+ec_retval_t ecsd_foe_error_request(struct ecsd *pecsd, struct ec_mailbox *mbx, ec_uint32_t error_code, ec_char_t *error_text) {
     ec_retval_t ret = EC_OK;
     struct ec_foe_error_request *mbx_err = (struct ec_foe_error_request *)mbx;
-
-    size_t error_len = min(pecsd->mbx.sm_send.length - 6 - 6, strlen(error_text));
-    mbx_err->mailbox_hdr.length = 6 + error_len;
-    mbx_err->foe_hdr.opcode = FOE_OPCODE__ERROR_REQUEST;
-    mbx_err->error_code = error_code;
-    memcpy(&mbx_err->error_text[0], error_text, error_len);
-
-    ret = ecsd_foe_mailbox_read_upd_req(pecsd, mbx);
 
     switch (pecsd->mbx.foe.state) {
         case FOE_STATE_UPLS:
         case FOE_STATE_DWLS:
+            // #15 | #20
+            pecsd->mbx.foe.seg = 0u;
+            size_t error_len = min(pecsd->mbx.sm_send.length - 6 - 6, strlen(error_text));
+            mbx_err->mailbox_hdr.length = 6 + error_len;
+            mbx_err->foe_hdr.opcode = FOE_OPCODE__ERROR_REQUEST;
+            mbx_err->error_code = error_code;
+            memcpy(&mbx_err->error_text[0], error_text, error_len);
+
+            ret = ecsd_foe_mailbox_read_upd_req(pecsd, mbx);
+
             pecsd->mbx.foe.state = FOE_STATE_WUPD;
             break;
         default:
@@ -164,20 +180,61 @@ ec_retval_t ecsd_foe_mailbox_error_request(struct ecsd *pecsd, struct ec_mailbox
     return ret;
 }
 
-ec_retval_t ecsd_foe_mailbox_ack_request(struct ecsd *pecsd, struct ec_mailbox *mbx, ec_uint32_t packet_no) {
+ec_retval_t ecsd_foe_ack_request(struct ecsd *pecsd, struct ec_mailbox *mbx, ec_uint32_t packet_no) {
     ec_retval_t ret = EC_OK;
     struct ec_foe_ack_request *mbx_ack = (struct ec_foe_ack_request *)mbx;
 
-    mbx_ack->mailbox_hdr.length = 6;
-    mbx_ack->foe_hdr.opcode = FOE_OPCODE__ACK_REQUEST;
-    mbx_ack->packet_no = packet_no;
-
-    ret = ecsd_foe_mailbox_read_upd_req(pecsd, mbx);
-
     switch (pecsd->mbx.foe.state) {
         case FOE_STATE_DWLS:
+            // #16
+            mbx_ack->mailbox_hdr.length = 6;
+            mbx_ack->foe_hdr.opcode = FOE_OPCODE__ACK_REQUEST;
+            mbx_ack->packet_no = packet_no;
+
+            ret = ecsd_foe_mailbox_read_upd_req(pecsd, mbx);
+
             pecsd->mbx.foe.state = FOE_STATE_DWUPD;
             break;
+        default:
+            break;
+    }
+
+    return ret;
+}
+
+ec_retval_t ecsd_foe_data_req(struct ecsd *pecsd, struct ec_mailbox *mbx, ec_uint32_t packet_no, ec_size_t size, uint8_t *data) {
+    ec_retval_t ret = EC_OK;
+
+    struct ec_foe_data_request *mbx_data = (struct ec_foe_data_request *)mbx;
+
+    switch (pecsd->mbx.foe.state) {
+        case FOE_STATE_UPLS: {
+            // #21 | #22
+            size_t copy_len = min(pecsd->mbx.sm_send.length - 6 - 6, size);
+
+            if (copy_len == size) {
+                // #21
+                mbx_data->mailbox_hdr.length = 6u + copy_len;
+                mbx_data->foe_hdr.opcode = FOE_OPCODE__DATA_REQUEST;
+                mbx_data->packet_no = packet_no;
+                memcpy(&mbx_data->data[0], &data[0], copy_len);
+                pecsd->mbx.foe.seg = packet_no + 1;
+
+                ret = ecsd_foe_mailbox_read_upd_req(pecsd, mbx);
+                pecsd->mbx.foe.state = FOE_STATE_UWUPD;
+            } else if (copy_len < size) {
+                // #22
+                mbx_data->mailbox_hdr.length = 6u + copy_len;
+                mbx_data->foe_hdr.opcode = FOE_OPCODE__DATA_REQUEST;
+                mbx_data->packet_no = packet_no;
+                memcpy(&mbx_data->data[0], &data[0], copy_len);
+                pecsd->mbx.foe.seg = packet_no + 1;
+
+                ret = ecsd_foe_mailbox_read_upd_req(pecsd, mbx);
+                pecsd->mbx.foe.state = FOE_STATE_WUPD;
+            }
+            break;
+        }
         default:
             break;
     }
@@ -247,6 +304,8 @@ ec_retval_t __attribute__((weak)) ecsd_foe_mailbox_error_ind(struct ecsd *pecsd,
  */
 ec_retval_t ecsd_foe_mailbox_start(struct ecsd *pecsd) {
     ec_retval_t ret = EC_OK;
+
+    pecsd->mbx.foe.seg = 0u;
 
     switch (pecsd->mbx.foe.state) {
         case FOE_STATE_OFF: {

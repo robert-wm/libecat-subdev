@@ -236,6 +236,7 @@ ec_retval_t ecsd_coe_sdo_download_normal_ind(struct ecsd *pecsd, struct ec_coe_s
     return ret;
 }
 
+
 ec_retval_t ecsd_coe_download_sdo_segment_ind(struct ecsd *pecsd, struct ec_coe_sdo_download_segmented_req *mbx) {
     assert(pecsd != NULL);
     ec_retval_t ret = EC_OK;

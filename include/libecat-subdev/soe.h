@@ -5,9 +5,9 @@
  *
  * \date 15 Nov 2023
  *
- * \brief ECSD CoE header.
+ * \brief ECSD SoE header.
  *
- * ECSD CoE header.
+ * ECSD SoE header.
  */
 
 /*

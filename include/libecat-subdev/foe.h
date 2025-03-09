@@ -51,6 +51,7 @@
 struct ecsd_foe {
     ec_uint8_t state;
 
+    uint16_t seg;
     uint8_t repeat_mbx_buffer[ECSD_MAILBOX_READ__MAX_LENGTH];
 };
 
@@ -84,6 +85,13 @@ struct ec_foe_write_request {
     ec_char_t filename[0];
 } __attribute__((__packed__));
 
+struct ec_foe_data_request {
+    struct ec_mailbox_hdr mailbox_hdr;
+    struct ec_foe_hdr foe_hdr;
+    ec_uint32_t packet_no;
+    ec_uint8_t data[0];
+} __attribute__((__packed__));
+
 struct ec_foe_error_request {
     struct ec_mailbox_hdr mailbox_hdr;
     struct ec_foe_hdr foe_hdr;
@@ -95,6 +103,15 @@ struct ec_foe_ack_request {
     struct ec_mailbox_hdr mailbox_hdr;
     struct ec_foe_hdr foe_hdr;
     ec_uint32_t packet_no;
+} __attribute__((__packed__));
+
+struct ec_foe_busy_request {
+    struct ec_mailbox_hdr mailbox_hdr;
+    struct ec_foe_hdr foe_hdr;
+    ec_uint16_t done;           /*!< @brief if 'entire' is 0: progress in percent
+                                            else            : size already transfered */
+    ec_uint16_t entire;         /*!< @brief file size or 0 (see 'done') */
+    ec_char_t busy_text[0];     /*!< @brief optional busy text */
 } __attribute__((__packed__));
 
 // forward declarations
