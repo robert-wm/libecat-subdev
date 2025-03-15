@@ -123,6 +123,12 @@ ec_void_t ecsd_open(struct ecsd *pecsd, void *hw_hdl, ecsd_hw_read read_func,
     pecsd->safeop_2_op_timeout_timer   = 0u;
     pecsd->dc_event_received           = EC_FALSE;
     pecsd->wait_for_pll_running        = EC_FALSE;
+    pecsd->pll_running_cnt             = 0;
+    pecsd->pll_running_cnt_target      = 1000;
+    pecsd->pll_running_fast_threshold  = 10000;
+    pecsd->pll_running_fast_inc        = 10;
+    pecsd->pll_running_slow_threshold  = 100000;
+    pecsd->pll_running_slow_inc        = 1;
     pecsd->wd_enabled                  = EC_FALSE;
     pecsd->ready_for_op                = EC_FALSE;
     pecsd->sm_event_received_internal  = EC_FALSE;
@@ -534,6 +540,7 @@ ec_void_t ecsd_ack_sm_chg(struct ecsd *pecsd) {
 ec_void_t ecsd_pll_running_event(struct ecsd *pecsd) {
     if (pecsd->wait_for_pll_running) {
         pecsd->wait_for_pll_running = EC_FALSE;
+        pecsd->pll_running_cnt = 0;
 
         switch (pecsd->al_state) {
             default:
@@ -1379,7 +1386,22 @@ ec_retval_t ecsd_output_update(struct ecsd *pecsd) {
 ec_void_t ecsd_sync0(struct ecsd *pecsd) {
     pecsd->dc_running = EC_TRUE;
 
-    ecsd_pll_running_event(pecsd);
+    if (pecsd->wait_for_pll_running) {
+        ec_uint16_t system_time_diff;
+        pecsd->hw.read(pecsd->hw.hdl, 0x92C, (void *)&system_time_diff, 4);
+        
+        if ((system_time_diff & 0x7FFFFFFF) < pecsd->pll_running_fast_threshold) { 
+            pecsd->pll_running_cnt += pecsd->pll_running_fast_inc;
+        } else if ((system_time_diff & 0x7FFFFFFF) < pecsd->pll_running_slow_threshold) { 
+            pecsd->pll_running_cnt += pecsd->pll_running_slow_inc;
+        } else {
+            pecsd->pll_running_cnt = 0;
+        }
+
+        if (pecsd->pll_running_cnt > pecsd->pll_running_cnt_target) {
+            ecsd_pll_running_event(pecsd);
+        }
+    }
 
     pecsd->dc_counter++;
 

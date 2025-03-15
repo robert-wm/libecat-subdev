@@ -91,6 +91,12 @@ struct ecsd {
                                                 // SyncManagers were disabled. Used in case of an error resulting in a
                                                 // state change from Op to SafeOp 
     ec_bool_t pll_running;                      //!< \brief Local application is synchronized with DC event and master application.
+    ec_int32_t pll_running_cnt;                 //!< \brief Counter while waiting for PLL is running.
+    ec_int32_t pll_running_cnt_target;          //!< \brief Counter value needs at least to be as big as target value.
+    ec_int32_t pll_running_fast_threshold;
+    ec_int32_t pll_running_fast_inc;
+    ec_int32_t pll_running_slow_threshold;
+    ec_int32_t pll_running_slow_inc;
     ec_uint32_t safeop_2_op_timeout_timer;      //!< \brief Timeout for state change from SafeOp to Op
     ec_bool_t dc_event_received;                //!< \brief Slave has received the Sync0/Sync1 event at least once
     ec_bool_t wait_for_pll_running;             //!< \brief Wait until local PLL has locked with master cycle (wait until 
