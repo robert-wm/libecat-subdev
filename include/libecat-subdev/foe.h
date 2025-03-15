@@ -33,6 +33,8 @@
 
 #include <stdint.h>
 #include <libecat-base/types.h>
+#include <libecat-base/mailbox.h>
+#include <libecat-subdev/settings.h>
 //#include <libecat-base/foe.h>
 
 #define FOE_STATE_OFF       ((uint8_t)  0u)
@@ -48,10 +50,69 @@
 
 struct ecsd_foe {
     ec_uint8_t state;
+
+    uint16_t seg;
+    uint8_t repeat_mbx_buffer[ECSD_MAILBOX_READ__MAX_LENGTH];
 };
 
+#define FOE_OPCODE__READ_REQUEST    ((ec_uint8_t)0x01u)
+#define FOE_OPCODE__WRITE_REQUEST   ((ec_uint8_t)0x02u)
+#define FOE_OPCODE__DATA_REQUEST    ((ec_uint8_t)0x03u)
+#define FOE_OPCODE__ACK_REQUEST     ((ec_uint8_t)0x04u)
+#define FOE_OPCODE__ERROR_REQUEST   ((ec_uint8_t)0x05u)
+
+struct ec_foe_hdr {
+    ec_uint8_t opcode;
+    ec_uint8_t reserved;
+} __attribute__((__packed__));
+
 struct ec_foe_service_data {
+    struct ec_mailbox_hdr mailbox_hdr;
+    struct ec_foe_hdr foe_hdr;
 };
+
+struct ec_foe_read_request {
+    struct ec_mailbox_hdr mailbox_hdr;
+    struct ec_foe_hdr foe_hdr;
+    ec_uint32_t password;
+    ec_char_t filename[0];
+} __attribute__((__packed__));
+
+struct ec_foe_write_request {
+    struct ec_mailbox_hdr mailbox_hdr;
+    struct ec_foe_hdr foe_hdr;
+    ec_uint32_t password;
+    ec_char_t filename[0];
+} __attribute__((__packed__));
+
+struct ec_foe_data_request {
+    struct ec_mailbox_hdr mailbox_hdr;
+    struct ec_foe_hdr foe_hdr;
+    ec_uint32_t packet_no;
+    ec_uint8_t data[0];
+} __attribute__((__packed__));
+
+struct ec_foe_error_request {
+    struct ec_mailbox_hdr mailbox_hdr;
+    struct ec_foe_hdr foe_hdr;
+    ec_uint32_t error_code;
+    ec_char_t error_text[0];
+} __attribute__((__packed__));
+
+struct ec_foe_ack_request {
+    struct ec_mailbox_hdr mailbox_hdr;
+    struct ec_foe_hdr foe_hdr;
+    ec_uint32_t packet_no;
+} __attribute__((__packed__));
+
+struct ec_foe_busy_request {
+    struct ec_mailbox_hdr mailbox_hdr;
+    struct ec_foe_hdr foe_hdr;
+    ec_uint16_t done;           /*!< @brief if 'entire' is 0: progress in percent
+                                            else            : size already transfered */
+    ec_uint16_t entire;         /*!< @brief file size or 0 (see 'done') */
+    ec_char_t busy_text[0];     /*!< @brief optional busy text */
+} __attribute__((__packed__));
 
 // forward declarations
 struct ecsd;
@@ -95,6 +156,10 @@ ec_retval_t ecsd_foe_mailbox_start(struct ecsd *pecsd);
 /*!
  */
 ec_retval_t ecsd_foe_mailbox_stop(struct ecsd *pecsd);
+
+
+ec_retval_t foe_read_ind(struct ecsd *pecsd, ec_uint32_t password, ec_char_t *filename);
+ec_retval_t foe_write_ind(struct ecsd *pecsd, ec_uint32_t password, ec_char_t *filename);
 
 #endif /* LIBECAT_SUBDEV_FOE_H */
 
