@@ -277,6 +277,20 @@ static ec_void_t ecsd_read_sm_config(struct ecsd *pecsd) {
     }
 }
 
+//! \brief AL event mask bits for all in-use PD sync managers.
+static ec_uint32_t ecsd_pd_sm_event_mask(struct ecsd *pecsd) {
+    ec_uint32_t mask = 0u;
+    unsigned sm_idx = pecsd->mbx_supported == EC_TRUE ? 2u : 0u;
+
+    for (; sm_idx < ECSD_MAX_SYNC_MANAGER; ++sm_idx) {
+        if (pecsd->sm_settings[sm_idx].max_length > 0u) {
+            mask |= EC_REG_AL_EVENT_REQUEST__SM_INTERRUPT__SM_MASK(sm_idx);
+        }
+    }
+
+    return mask;
+}
+
 //! \brief Enable sync manager channel
 /*!
  * \param[in]   pecsd        Pointer to ESC struture.
@@ -460,7 +474,7 @@ ec_retval_t ecsd_start_input_handler(struct ecsd *pecsd) {
     ec_retval_t ret = EC_OK;
 
     // dc checks
-    uint16_t al_event_mask = 0x00000804;
+    uint32_t al_event_mask = EC_REG_AL_EVENT_REQUEST__DC_SYNC0__MASK | ecsd_pd_sm_event_mask(pecsd);
     uint16_t dc_control[2];
     pecsd->hw.read(pecsd->hw.hdl, EC_REG_DC_CYCLIC_UNIT_CONTROL_ACT, (void *)&dc_control[0], 2 * sizeof(uint16_t));
 
@@ -540,8 +554,8 @@ ec_retval_t ecsd_start_input_handler(struct ecsd *pecsd) {
 }
 
 ec_retval_t ecsd_stop_input_handler(struct ecsd *pecsd) {
-    // Stop al event on corresponding Sync Manager 3.
-    ecsd_reset_al_event_mask(pecsd, 0x0000080C);
+    // Stop al event on corresponding sync managers.
+    ecsd_reset_al_event_mask(pecsd, EC_REG_AL_EVENT_REQUEST__DC_SYNC0__MASK | ecsd_pd_sm_event_mask(pecsd));
 
     if (pecsd->hw.enable_sync0) {
         pecsd->hw.enable_sync0(pecsd, EC_FALSE);
@@ -1559,47 +1573,49 @@ ec_void_t ecsd_pdi(struct ecsd *pecsd) {
     pecsd->ready_for_op                = EC_TRUE;
 
     ec_uint32_t al_event;
-    pecsd->hw.read(pecsd->hw.hdl, EC_REG_AL_EVENT_MASK, (void *)&al_event, 4);
+    unsigned sm_first = pecsd->mbx_supported == EC_TRUE ? 2u : 0u;
+    unsigned sm_idx;
+
+    // Collect the interrupt bits of all in-use output sync managers.
+    ec_uint32_t output_sm_events = 0u;
+    for (sm_idx = sm_first; sm_idx < ECSD_MAX_SYNC_MANAGER; ++sm_idx) {
+        if ((pecsd->sm_settings[sm_idx].max_length > 0u) &&
+            (pecsd->sm_settings[sm_idx].direction == EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_WRITE)) {
+            output_sm_events |= EC_REG_AL_EVENT_REQUEST__SM_INTERRUPT__SM_MASK(sm_idx);
+        }
+    }
 
     // read al event-register from esc
     pecsd->hw.read(pecsd->hw.hdl, EC_REG_AL_EVENT_REQUEST, (void *)&al_event, 4);
-    if (al_event & EC_REG_AL_EVENT_REQUEST__SM_INTERRUPT__SM_MASK(2)) {
-        // output event
+    if (al_event & output_sm_events) {
+        // output event: read new output data from the esc
         pecsd->dc_counter = 0;
         pecsd->outputs_update_running = EC_TRUE;
 
-        unsigned sm_idx = pecsd->mbx_supported == EC_TRUE ? 2u : 0u;
-
-        do {
+        for (sm_idx = sm_first; sm_idx < ECSD_MAX_SYNC_MANAGER; ++sm_idx) {
             if ((pecsd->sm[sm_idx].activate) &&
-                (pecsd->sm_settings[sm_idx].direction == EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_READ))
+                (pecsd->sm_settings[sm_idx].direction == EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_WRITE))
             {
                 pecsd->hw.read(pecsd->hw.hdl, pecsd->sm[sm_idx].address, &pecsd->data[sm_idx][0], pecsd->sm[sm_idx].length);
             }
-        } while (++sm_idx < ECSD_MAX_SYNC_MANAGER);
+        }
         ecsd_output_update(pecsd);
     }
 
-//    if (al_event & EC_REG_AL_EVENT_REQUEST__SM_INTERRUPT__SM_MASK(3)) {
-//      // input event
-//      pecsd->hw.write(pecsd->hw.hdl, pecsd->pdinputs.address, &pecsd->pdinputs_data[0], pecsd->pdinputs.length);
-//    }
-
     // Overrun check
-     pecsd->hw.read(pecsd->hw.hdl, EC_REG_AL_EVENT_REQUEST, (void *)&al_event, 4);
-     if (al_event & EC_REG_AL_EVENT_REQUEST__SM_INTERRUPT__SM_MASK(2)) {
+    pecsd->hw.read(pecsd->hw.hdl, EC_REG_AL_EVENT_REQUEST, (void *)&al_event, 4);
+    if (al_event & output_sm_events) {
         uint8_t dummy[2];
 
-        unsigned sm_idx = pecsd->mbx_supported == EC_TRUE ? 2u : 0u;
-        do {
-            if ((pecsd->sm[sm_idx].length > 0) && 
+        for (sm_idx = sm_first; sm_idx < ECSD_MAX_SYNC_MANAGER; ++sm_idx) {
+            if ((pecsd->sm[sm_idx].length > 0) &&
                 (pecsd->sm_settings[sm_idx].direction == EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_WRITE))
-            { 
+            {
                 pecsd->hw.read(pecsd->hw.hdl, pecsd->sm[sm_idx].address, &dummy[0], 2);
                 pecsd->hw.read(pecsd->hw.hdl, pecsd->sm[sm_idx].address + pecsd->sm[sm_idx].length - 2, &dummy[0], 2);
-            }            
-        } while (++sm_idx < ECSD_MAX_SYNC_MANAGER);
-     }
+            }
+        }
+    }
 }
 
 
