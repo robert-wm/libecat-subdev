@@ -477,11 +477,11 @@ ec_retval_t ecsd_start_input_handler(struct ecsd *pecsd) {
     do {
         if (pecsd->sm[sm_idx].activate > 0) {
             if (pecsd->sm_settings[sm_idx].direction == EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_WRITE) {
-                pecsd->hw.read(pecsd->hw.hdl, EC_REG_SYNC_MANAGER + (sm_idx * EC_REG_SYNC_MANAGER__BASE_OFFSET), 
+                pecsd->hw.read(pecsd->hw.hdl, pecsd->sm[sm_idx].address, 
                     (ec_uint8_t *)&pecsd->data[sm_idx], pecsd->sm[sm_idx].length);    
                 enable_write = ecsd_sm_mode_enable;
             } else {
-                pecsd->hw.write(pecsd->hw.hdl, EC_REG_SYNC_MANAGER + (sm_idx * EC_REG_SYNC_MANAGER__BASE_OFFSET), 
+                pecsd->hw.write(pecsd->hw.hdl, pecsd->sm[sm_idx].address, 
                     (ec_uint8_t *)&pecsd->data[sm_idx], pecsd->sm[sm_idx].length);    
                 enable_read = ecsd_sm_mode_enable;
             }
