@@ -267,6 +267,16 @@ ec_bool_t ecsd_sm_settings_2_to_n_match(struct ecsd *pecsd) {
     return ret;
 }
 
+//! \brief Read sync manager configuration from the ESC into pecsd->sm[].
+static ec_void_t ecsd_read_sm_config(struct ecsd *pecsd) {
+    unsigned sm_idx;
+
+    for (sm_idx = 0u; sm_idx < ECSD_MAX_SYNC_MANAGER; ++sm_idx) {
+        pecsd->hw.read(pecsd->hw.hdl, EC_REG_SYNC_MANAGER_N(sm_idx),
+            (ec_uint8_t *)&pecsd->sm[sm_idx], sizeof(pecsd->sm[sm_idx]));
+    }
+}
+
 //! \brief Enable sync manager channel
 /*!
  * \param[in]   pecsd        Pointer to ESC struture.
@@ -470,6 +480,9 @@ ec_retval_t ecsd_start_input_handler(struct ecsd *pecsd) {
             pecsd->hw.enable_sync1(pecsd, EC_TRUE);
         }
     }
+
+    // Read current sync manager configuration from the ESC.
+    ecsd_read_sm_config(pecsd);
 
     unsigned sm_idx = 0u;
     if (pecsd->mbx_supported == EC_TRUE) {
@@ -1203,6 +1216,9 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
  * \param[in]   pecsd        Pointer to ESC struture.
  */
 ec_void_t ecsd_sm_chg(struct ecsd *pecsd) {
+    // SM configuration may have changed, refresh cached copy.
+    ecsd_read_sm_config(pecsd);
+
     switch (pecsd->al_state) {
         case EC_STATE_INIT:
             // #10
