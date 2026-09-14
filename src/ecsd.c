@@ -99,7 +99,13 @@ ec_void_t ecsd_open(struct ecsd *pecsd, void *hw_hdl, ecsd_hw_read read_func,
         ecsd_hw_write write_func, ecsd_hw_enable_int enable_int_func, ec_uint16_t pdi_type)
 {
     (void)pdi_type;
-    
+    assert(pecsd != NULL);
+
+    // Zero the whole structure so fields not explicitly initialized below
+    // (sm[], data[], mbx, hw.enable_sync0/1, ...) start in a defined state,
+    // no matter how the caller allocated/initialized 'pecsd'.
+    memset(pecsd, 0, sizeof(*pecsd));
+
     uint32_t al_event_mask = 0;
 
     pecsd->hw.hdl = hw_hdl;
