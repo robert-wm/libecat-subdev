@@ -713,16 +713,24 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                     if ((pecsd->al_error_flag == EC_FALSE) || (ack_flag == EC_TRUE)) {
                         // #3 | #4
                         if (ecsd_sm_settings_0_and_1_match(pecsd) == EC_TRUE) {
-                            // #3
-                            ec_log(100, __func__, "Transition #3, switching to PREOP.\n");
+                            if (ecsd_start_mbx_handler(pecsd) == EC_TRUE) {
+                                // #3
+                                ec_log(100, __func__, "Transition #3, switching to PREOP.\n");
 
-                            pecsd->al_error_flag = EC_FALSE;
-                            pecsd->al_status_code = 0;
-                            pecsd->al_state = EC_STATE_PREOP;
+                                pecsd->al_error_flag = EC_FALSE;
+                                pecsd->al_status_code = 0;
+                                pecsd->al_state = EC_STATE_PREOP;
 
-                            (void)ecsd_start_mbx_handler(pecsd);
-                    
-                            ecsd_id_info(pecsd, id_request);
+                                ecsd_id_info(pecsd, id_request);
+                            } else {
+                                // #4
+                                ec_log(100, __func__, "Transition #4, mbx start failed, staying in INIT.\n");
+
+                                pecsd->id_flag = EC_FALSE;
+                                pecsd->al_state = EC_STATE_INIT;
+                                pecsd->al_status_code = EC_AL_STATUS_CODE__INVALID_MAILBOX_CONFIGURATION__PREOP;
+                                pecsd->al_error_flag = EC_TRUE;
+                            }
                         } else {
                             // #4
                             ec_log(100, __func__, "Transition #4, wrong mbx sm settings, staying in INIT.\n");
@@ -746,14 +754,22 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                         if (pecsd->boot_supported == EC_TRUE) {
                             // #5 | #6
                             if (ecsd_sm_settings_0_and_1_match(pecsd) == EC_TRUE) {
-                                // #5
-                                ec_log(100, __func__, "Transition #5, switching to BOOT.\n");
+                                if (ecsd_start_mbx_handler(pecsd) == EC_TRUE) {
+                                    // #5
+                                    ec_log(100, __func__, "Transition #5, switching to BOOT.\n");
 
-                                pecsd->al_error_flag = EC_FALSE;
-                                pecsd->al_state = EC_STATE_BOOT;
-                                pecsd->al_status_code = 0;
+                                    pecsd->al_error_flag = EC_FALSE;
+                                    pecsd->al_state = EC_STATE_BOOT;
+                                    pecsd->al_status_code = 0;
+                                } else {
+                                    // #6
+                                    ec_log(100, __func__, "Transition #6, mbx start failed, staying in INIT.\n");
 
-                                (void)ecsd_start_mbx_handler(pecsd);
+                                    pecsd->id_flag = EC_FALSE;
+                                    pecsd->al_state = EC_STATE_INIT;
+                                    pecsd->al_status_code = EC_AL_STATUS_CODE__INVALID_MAILBOX_CONFIGURATION__BOOT;
+                                    pecsd->al_error_flag = EC_TRUE;
+                                }
                             } else {
                                 // #6
                                 ec_log(100, __func__, "Transition #6, wrong mbx sm settings, staying in INIT.\n");
@@ -999,8 +1015,9 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                         ecsd_stop_input_handler(pecsd);
 
                         ecsd_id_info(pecsd, id_request);
-                        ecsd_al_control_rsp(pecsd, pecsd->al_state, pecsd->al_status_code, pecsd->al_error_flag, pecsd->id_flag);
                     }
+
+                    ecsd_al_control_rsp(pecsd, pecsd->al_state, pecsd->al_status_code, pecsd->al_error_flag, pecsd->id_flag);
                     break;
                 case EC_STATE_SAFEOP:
                     // #25.1 | #25.2 
@@ -1020,6 +1037,10 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
 
                         pecsd->al_error_flag = EC_FALSE;
                         pecsd->al_status_code = 0u;
+
+                        // Re-enable the SM channels disabled by a local error (#34.1).
+                        ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_read, ecsd_sm_mode_enable);
+                        ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_write, ecsd_sm_mode_enable);
 
                         ecsd_id_info(pecsd, id_request);
                     }
@@ -1164,28 +1185,21 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                     break;
                 case EC_STATE_BOOT:
                     // #42
-                    ec_log(100, __func__, "Transition #42, invaild state change requested, switch to SAFEOP.\n");
+                    ec_log(100, __func__, "Transition #42, invalid state change requested, stay in OP.\n");
 
                     pecsd->id_flag = EC_FALSE;
-                    pecsd->al_state = EC_STATE_SAFEOP;
+                    pecsd->al_state = EC_STATE_OP;
                     pecsd->al_status_code = EC_AL_STATUS_CODE__INVALID_REQUESTED_STATE_CHANGE;
                     pecsd->al_error_flag = EC_TRUE;
-
-                    ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_read, ecsd_sm_mode_disable);
-                    ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_write, ecsd_sm_mode_disable);
-                    ecsd_stop_local_output_handler(pecsd);
                     break;
                 default:
                     // #43
-                    ec_log(100, __func__, "Transition #43, unknown state change requested, switch to SAFEOP.\n");
+                    ec_log(100, __func__, "Transition #43, unknown state change requested, stay in OP.\n");
 
                     pecsd->id_flag = EC_FALSE;
-                    pecsd->al_state = EC_STATE_SAFEOP;
+                    pecsd->al_state = EC_STATE_OP;
                     pecsd->al_status_code = EC_AL_STATUS_CODE__UNKNOWN_REQUESTED_STATE;
                     pecsd->al_error_flag = EC_TRUE;
-
-                    ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_write, ecsd_sm_mode_disable);
-                    ecsd_stop_local_output_handler(pecsd);
                     break;
             }
                     
@@ -1327,6 +1341,7 @@ ec_void_t ecsd_sm_chg(struct ecsd *pecsd) {
             // #55 | #56.1 | #56.2
             if (ecsd_sm_settings_0_and_1_match(pecsd) == EC_TRUE) {
                 // #55
+                ecsd_ack_sm_chg(pecsd);
             } else {
                 // #56.1 | #56.2
                 pecsd->al_status_code = EC_AL_STATUS_CODE__INVALID_MAILBOX_CONFIGURATION__PREOP;
@@ -1334,6 +1349,7 @@ ec_void_t ecsd_sm_chg(struct ecsd *pecsd) {
                 pecsd->al_state = EC_STATE_INIT;
                 
                 ecsd_stop_mbx_handler(pecsd);
+                ecsd_ack_sm_chg(pecsd);
                 ecsd_al_state_change_req(pecsd, pecsd->al_state, pecsd->al_status_code);
             }
             break;
