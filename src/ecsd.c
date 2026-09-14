@@ -151,7 +151,7 @@ ec_void_t ecsd_open(struct ecsd *pecsd, void *hw_hdl, ecsd_hw_read read_func,
 
 ec_void_t ecsd_set_al_event_mask(struct ecsd *pecsd, uint32_t bits_to_set) {
     // Start al event mask.
-    uint16_t al_event_mask = 0u;
+    uint32_t al_event_mask = 0u;
 
     pecsd->hw.read(pecsd->hw.hdl, EC_REG_AL_EVENT_MASK, (void *)&al_event_mask, sizeof(al_event_mask));
     al_event_mask |= bits_to_set;
@@ -163,7 +163,7 @@ ec_void_t ecsd_set_al_event_mask(struct ecsd *pecsd, uint32_t bits_to_set) {
 
 ec_void_t ecsd_reset_al_event_mask(struct ecsd *pecsd, uint32_t bits_to_reset) {
     // Start al event mask.
-    uint16_t al_event_mask = 0u;
+    uint32_t al_event_mask = 0u;
     
     pecsd->hw.read(pecsd->hw.hdl, EC_REG_AL_EVENT_MASK, (void *)&al_event_mask, sizeof(al_event_mask));
     al_event_mask &= ~bits_to_reset;
