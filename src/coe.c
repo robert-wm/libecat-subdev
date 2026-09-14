@@ -30,14 +30,14 @@
 
 #include <libecat-subdev/coe.h>
 
-/* include generated object dictionary */
-#include "object.h"
-
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
 
 #ifdef ECSD_MAILBOX_COE_SUPPORT
+
+/* include generated object dictionary */
+#include "object.h"
 
 // forward declarations
 

@@ -86,6 +86,7 @@ ec_retval_t ecsd_mailbox_write_ind(struct ecsd *pecsd, struct ec_mailbox *mbx) {
 ec_retval_t ecsd_mailbox_read_upd_cnf(struct ecsd *pecsd, ec_bool_t success) {
     assert (pecsd != NULL);
     ec_retval_t ret = 0u;
+    (void)success;
 
 #ifdef ECSD_MAILBOX_COE_SUPPORT
     ret = ecsd_coe_mailbox_read_upd_cnf(pecsd, success);

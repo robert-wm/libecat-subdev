@@ -31,7 +31,7 @@
 #ifndef LIBECAT_SUBDEV_SETTINGS_H
 #define LIBECAT_SUBDEV_SETTINGS_H
 
-#define ECSD_MAILBOX_SUPPORTED                   OSAL_TRUE
+#define ECSD_MAILBOX_SUPPORTED                   OSAL_FALSE
 #define ECSD_BOOT_SUPPORTED                      OSAL_TRUE
 #define ECSD_DC_SUPPORTED                        OSAL_TRUE
 
@@ -46,6 +46,15 @@
 #define ECSD_MAILBOX_READ__MAX_ADDRESS           0x2000
 #define ECSD_MAILBOX_READ__MIN_LENGTH            0x80
 #define ECSD_MAILBOX_READ__MAX_LENGTH            0x400
+
+struct ecsd_sm_settings {
+    ec_uint16_t min_address;
+    ec_uint16_t max_address;
+    ec_uint16_t min_length;
+    ec_uint16_t max_length;
+    ec_uint8_t op_mode;
+    ec_uint8_t direction;    
+};
 
 #endif /* LIBECAT_SUBDEV_SETTINGS_H */
 

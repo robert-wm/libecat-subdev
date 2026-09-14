@@ -123,11 +123,9 @@ struct ecsd {
     struct mailbox mbx;
     struct hw hw;
 
-    struct ec_slave_sm pdoutputs;
-    struct ec_slave_sm pdinputs;
-
-    uint8_t pdoutputs_data[1024];
-    uint8_t pdinputs_data[1024];
+    struct ecsd_sm_settings sm_settings[ECSD_MAX_SYNC_MANAGER];
+    struct ec_slave_sm sm[ECSD_MAX_SYNC_MANAGER];
+    ec_uint8_t data[ECSD_MAX_SYNC_MANAGER][1024];
 };
 
 //! \brief Opens and initializes EtherCAT SubDev
@@ -210,6 +208,8 @@ ec_void_t ecsd_sync0(struct ecsd *pecsd);
 ec_void_t ecsd_sync1(struct ecsd *pecsd);
 ec_void_t ecsd_pdo(struct ecsd *pecsd);
 ec_void_t ecsd_pdi(struct ecsd *pecsd);
+
+ec_retval_t ecsd_stop_local_output_handler(struct ecsd *pecsd);
 
 #endif // LIBECAT_SUBDEV_ECSD_H
 
