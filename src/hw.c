@@ -10,7 +10,7 @@
 #if 0
 //! \brief copy bytes from ESC memory to local memory
 /*!
- * \param[in]   pecsd        Pointer to ESC struture.
+ * \param[in]   pecsd        Pointer to ESC structure.
  * \param[in]   adr         ESC memory address to copy from.
  * \param[out]  buf         Target buffer to copy to.
  * \param[in]   buf_len     Length of target buffer.
@@ -27,7 +27,7 @@ ec_size_t _hw_read(struct ecsd *pecsd, ec_off_t adr, ec_uint8_t *buf, ec_size_t 
 
 //! \brief copy bytes from local memory to ESC memory
 /*!
- * \param[in]   pecsd        Pointer to ESC struture.
+ * \param[in]   pecsd        Pointer to ESC structure.
  * \param[in]   adr         ESC memory address to copy to.
  * \param[in]   buf         Target buffer to copy from.
  * \param[in]   buf_len     Length of target buffer.
@@ -44,7 +44,7 @@ ec_size_t _hw_write(struct ecsd *pecsd, ec_off_t adr, ec_uint8_t *buf, ec_size_t
 
 //! \brief Opens and initializes ESC hardware
 /*!
- * \param[in]   pecsd        Pointer to ESC struture.
+ * \param[in]   pecsd        Pointer to ESC structure.
  * \param[in]   ecsd_base    Base address of ESC memory.
  * \param[in]   pdi_type    Type of PDI waiting for ESC to become ready.
  *
