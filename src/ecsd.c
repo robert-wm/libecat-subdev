@@ -142,7 +142,7 @@ ec_void_t ecsd_open(struct ecsd *pecsd, void *hw_hdl, ecsd_hw_read read_func,
     pecsd->wd_enabled                  = EC_FALSE;
     pecsd->ready_for_op                = EC_FALSE;
     pecsd->sm_event_received_internal  = EC_FALSE;
-    pecsd->mbx_supported               = EC_FALSE;
+    pecsd->mbx_supported               = ECSD_MAILBOX_SUPPORTED;
     pecsd->mbx_running                 = EC_FALSE;
 
     pecsd->hw.write(pecsd->hw.hdl, EC_REG_AL_EVENT_MASK, (void *)&al_event_mask, sizeof(al_event_mask));
@@ -1528,9 +1528,9 @@ ec_void_t ecsd_sync0(struct ecsd *pecsd) {
         ec_uint32_t system_time_diff;
         pecsd->hw.read(pecsd->hw.hdl, 0x92C, (void *)&system_time_diff, 4);
         
-        if ((system_time_diff & 0x7FFFFFFF) < pecsd->pll_running_fast_threshold) { 
+        if ((system_time_diff & 0x7FFFFFFFu) < (ec_uint32_t)pecsd->pll_running_fast_threshold) { 
             pecsd->pll_running_cnt += pecsd->pll_running_fast_inc;
-        } else if ((system_time_diff & 0x7FFFFFFF) < pecsd->pll_running_slow_threshold) { 
+        } else if ((system_time_diff & 0x7FFFFFFFu) < (ec_uint32_t)pecsd->pll_running_slow_threshold) { 
             pecsd->pll_running_cnt += pecsd->pll_running_slow_inc;
         } else {
             pecsd->pll_running_cnt = 0;

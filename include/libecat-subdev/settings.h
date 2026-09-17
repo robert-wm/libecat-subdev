@@ -31,7 +31,8 @@
 #ifndef LIBECAT_SUBDEV_SETTINGS_H
 #define LIBECAT_SUBDEV_SETTINGS_H
 
-#define ECSD_MAILBOX_SUPPORTED                   OSAL_FALSE
+#define ECSD_MAILBOX_SUPPORTED                   EC_TRUE
+#define ECSD_MAILBOX_COE_SUPPORT                 1
 #define ECSD_BOOT_SUPPORTED                      OSAL_TRUE
 #define ECSD_DC_SUPPORTED                        OSAL_TRUE
 
