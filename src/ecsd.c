@@ -227,10 +227,56 @@ static ec_bool_t ecsd_sm_settings_0_and_1_match(struct ecsd *pecsd) {
     return ret;
 }
 
+//! \brief Check that the process data regions of all configured sync
+//!        managers do not overlap.
+//! A buffered sync manager occupies ECSD_SM_BUFFERED__REGION_MULTIPLIER
+//! consecutive length-sized windows starting at its start address;
+//! sync managers in any other operation mode occupy a single window.
+//! Returns EC_TRUE if no two regions overlap.
+static ec_bool_t ecsd_sm_regions_match(struct ecsd *pecsd) {
+    ec_uint32_t start[ECSD_MAX_SYNC_MANAGER];
+    ec_uint32_t end[ECSD_MAX_SYNC_MANAGER];
+    uint32_t n_active = 0;
+
+    for (uint32_t sm_idx = 0; sm_idx < ECSD_MAX_SYNC_MANAGER; sm_idx++) {
+        struct ec_slave_sm sm;
+        uint32_t mult = 1u;
+
+        if (pecsd->sm_settings[sm_idx].max_length == 0u) {
+            continue; // sync manager not in use
+        }
+
+        if (pecsd->hw.read(pecsd->hw.hdl,
+                    EC_REG_SYNC_MANAGER + (sm_idx * EC_REG_SYNC_MANAGER__BASE_OFFSET),
+                    (ec_uint8_t *)&sm, sizeof(sm)) != sizeof(sm)) {
+            return EC_FALSE;
+        }
+
+        if ((sm.control & EC_REG_SYNC_MANAGER__CONTROL__OP_MODE_MASK)
+                == EC_REG_SYNC_MANAGER__CONTROL__OP_MODE_BUFFERED) {
+            mult = ECSD_SM_BUFFERED__REGION_MULTIPLIER;
+        }
+
+        start[n_active] = sm.address;
+        end[n_active] = (ec_uint32_t)sm.address + (ec_uint32_t)sm.length * mult;
+        n_active++;
+    }
+
+    for (uint32_t a = 0; a < n_active; a++) {
+        for (uint32_t b = a + 1u; b < n_active; b++) {
+            if ((start[a] < end[b]) && (start[b] < end[a])) {
+                return EC_FALSE; // ERROR: sync manager regions overlap
+            }
+        }
+    }
+
+    return EC_TRUE;
+}
+
 static ec_bool_t ecsd_sm_settings_2_to_n_match(struct ecsd *pecsd) {
     ec_bool_t ret = EC_TRUE;
     unsigned sm_idx = 0;
-    
+
     if (pecsd->mbx_supported == EC_TRUE) {
         // skip checking mailbox SMs
         sm_idx = 2;
@@ -259,9 +305,21 @@ static ec_bool_t ecsd_sm_settings_2_to_n_match(struct ecsd *pecsd) {
                 ret = EC_FALSE; // ERROR: Sync manager has wrong length
             } else if ((sm_mbx.address & 0x1) || (sm_mbx.length & 0x1)) {
                 ret = EC_FALSE; // ERROR: Sync manager address or length not at 16-bit boundaries!
+            } else if (((sm_mbx.control & EC_REG_SYNC_MANAGER__CONTROL__OP_MODE_MASK)
+                        == EC_REG_SYNC_MANAGER__CONTROL__OP_MODE_BUFFERED)
+                    && ((ec_uint32_t)sm_mbx.address
+                        + (ec_uint32_t)sm_mbx.length * ECSD_SM_BUFFERED__REGION_MULTIPLIER)
+                        >= pecsd->sm_settings[sm_idx].max_address) {
+                ret = EC_FALSE; // ERROR: Triple buffered region exceeds configured address range
             }
         }
     } while (++sm_idx < ECSD_MAX_SYNC_MANAGER);
+
+    // Finally, make sure the process data regions of all configured sync
+    // managers (including the mailbox ones) do not overlap.
+    if (ret == EC_TRUE) {
+        ret = ecsd_sm_regions_match(pecsd);
+    }
 
     return ret;
 }

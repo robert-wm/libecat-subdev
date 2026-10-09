@@ -38,6 +38,15 @@
 
 #define ECSD_MAX_SYNC_MANAGER                    8u
 
+/*
+ * A sync manager in buffered (triple buffered) operation mode needs
+ * three consecutive process data windows, each of the sync manager's
+ * length, starting at its start address. The ESC rotates through the
+ * three buffers, so the whole 3 x length region must be contiguous
+ * and must not overlap any other sync manager's region.
+ */
+#define ECSD_SM_BUFFERED__REGION_MULTIPLIER      3u
+
 #define ECSD_MAILBOX_WRITE__MIN_ADDRESS          0x1000
 #define ECSD_MAILBOX_WRITE__MAX_ADDRESS          0x2000
 #define ECSD_MAILBOX_WRITE__MIN_LENGTH           0x80
