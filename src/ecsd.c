@@ -920,7 +920,7 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                 case EC_STATE_PREOP:
                     if ((pecsd->al_error_flag == EC_FALSE) || (ack_flag == EC_TRUE)) {
                         // #13
-                        ec_log(100, __func__, "Transition #13, reset ERROR, stay in PREOP.\n");
+                        ec_log(100, __func__, "Transition #13, %sstay in PREOP.\n", pecsd->al_error_flag ? "reset ERROR, " : "");
 
                         pecsd->al_error_flag = EC_FALSE;
                         pecsd->al_status_code = 0;
@@ -1082,8 +1082,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                     // #25.1 | #25.2 
                     if ((pecsd->al_error_flag == EC_TRUE) && ((pecsd->local_error_flag == EC_FALSE) && (ack_flag == EC_TRUE))) {
                         // #25.1
-                        ec_log(100, __func__, "Transition #25.1, reset ERROR, stay in SAFEOP.\n");
-
+                        ec_log(100, __func__, "Transition #25.1, %sstay in SAFEOP.\n",
+                            pecsd->al_error_flag ? "reset ERROR, " : "");
                         pecsd->al_error_flag = EC_FALSE;
                         pecsd->al_status_code = 0u;
 
@@ -1092,7 +1092,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                         ecsd_id_info(pecsd, id_request);
                     } else if ((pecsd->al_error_flag == EC_FALSE) || ((pecsd->local_error_flag == EC_TRUE) && (ack_flag == EC_TRUE))) {
                         // #25.2
-                        ec_log(100, __func__, "Transition #25.2, reset ERROR, stay in SAFEOP.\n");
+                        ec_log(100, __func__, "Transition #25.2, %sstay in SAFEOP.\n",
+                            pecsd->al_error_flag ? "reset ERROR, " : "");
 
                         pecsd->al_error_flag = EC_FALSE;
                         pecsd->al_status_code = 0u;
