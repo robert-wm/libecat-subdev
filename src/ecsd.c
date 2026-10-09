@@ -568,7 +568,7 @@ static ec_retval_t ecsd_start_input_handler(struct ecsd *pecsd) {
     
     do {
         if ((pecsd->sm[sm_idx].activate & EC_REG_SYNC_MANAGER__ACTIVATE__ENABLE_SM) != 0u) {
-            if (pecsd->sm_settings[sm_idx].direction == EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_WRITE) {
+            if ((pecsd->sm[sm_idx].control & EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_MASK) == EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_WRITE) {
                 pecsd->hw.read(pecsd->hw.hdl, pecsd->sm[sm_idx].address, 
                     (ec_uint8_t *)&pecsd->data[sm_idx], pecsd->sm[sm_idx].length);    
                 enable_write = ecsd_sm_mode_enable;
@@ -602,7 +602,7 @@ static ec_retval_t ecsd_start_input_handler(struct ecsd *pecsd) {
 
         do {
             if ((pecsd->sm[sm_idx].length > 0) && 
-                (pecsd->sm_settings[sm_idx].direction == EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_READ))
+                ((pecsd->sm[sm_idx].control & EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_MASK) == EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_READ))
             { 
                 pecsd->hw.write(pecsd->hw.hdl, pecsd->sm[sm_idx].address, &pecsd->data[sm_idx][0], pecsd->sm[sm_idx].length);
             }            
@@ -1607,7 +1607,7 @@ ec_void_t ecsd_sync0(struct ecsd *pecsd) {
     unsigned sm_idx = pecsd->mbx_supported == EC_TRUE ? 2u : 0u;
     do {
         if ((pecsd->sm[sm_idx].length > 0) && 
-            (pecsd->sm_settings[sm_idx].direction == EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_READ))
+            ((pecsd->sm[sm_idx].control & EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_MASK) == EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_READ))
         { 
             pecsd->hw.write(pecsd->hw.hdl, pecsd->sm[sm_idx].address, &pecsd->data[sm_idx][0], pecsd->sm[sm_idx].length);
         }            
@@ -1632,8 +1632,8 @@ ec_void_t ecsd_pdi(struct ecsd *pecsd) {
     // Collect the interrupt bits of all in-use output sync managers.
     ec_uint32_t output_sm_events = 0u;
     for (sm_idx = sm_first; sm_idx < ECSD_MAX_SYNC_MANAGER; ++sm_idx) {
-        if ((pecsd->sm_settings[sm_idx].max_length > 0u) &&
-            (pecsd->sm_settings[sm_idx].direction == EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_WRITE)) {
+        if ((pecsd->sm[sm_idx].length > 0u) &&
+            ((pecsd->sm[sm_idx].control & EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_MASK) == EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_WRITE)) {
             output_sm_events |= EC_REG_AL_EVENT_REQUEST__SM_INTERRUPT__SM_MASK(sm_idx);
         }
     }
@@ -1647,7 +1647,7 @@ ec_void_t ecsd_pdi(struct ecsd *pecsd) {
 
         for (sm_idx = sm_first; sm_idx < ECSD_MAX_SYNC_MANAGER; ++sm_idx) {
             if (((pecsd->sm[sm_idx].activate & EC_REG_SYNC_MANAGER__ACTIVATE__ENABLE_SM) != 0u) &&
-                (pecsd->sm_settings[sm_idx].direction == EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_WRITE))
+                ((pecsd->sm[sm_idx].control & EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_MASK) == EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_WRITE))
             {
                 pecsd->hw.read(pecsd->hw.hdl, pecsd->sm[sm_idx].address, &pecsd->data[sm_idx][0], pecsd->sm[sm_idx].length);
             }
@@ -1662,7 +1662,7 @@ ec_void_t ecsd_pdi(struct ecsd *pecsd) {
 
         for (sm_idx = sm_first; sm_idx < ECSD_MAX_SYNC_MANAGER; ++sm_idx) {
             if ((pecsd->sm[sm_idx].length > 0) &&
-                (pecsd->sm_settings[sm_idx].direction == EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_WRITE))
+                ((pecsd->sm[sm_idx].control & EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_MASK) == EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_WRITE))
             {
                 pecsd->hw.read(pecsd->hw.hdl, pecsd->sm[sm_idx].address, &dummy[0], 2);
                 pecsd->hw.read(pecsd->hw.hdl, pecsd->sm[sm_idx].address + pecsd->sm[sm_idx].length - 2, &dummy[0], 2);
