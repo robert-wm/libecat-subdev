@@ -36,7 +36,7 @@
 #define ECSD_BOOT_SUPPORTED                      OSAL_TRUE
 #define ECSD_DC_SUPPORTED                        OSAL_TRUE
 
-#define ECSD_MAX_SYNC_MANAGER                    8u
+#define ECSD_MAX_SYNC_MANAGER                    4u
 
 /*
  * A sync manager in buffered (triple buffered) operation mode needs

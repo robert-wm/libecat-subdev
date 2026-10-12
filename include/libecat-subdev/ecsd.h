@@ -125,22 +125,22 @@ struct ecsd {
 
     struct ecsd_sm_settings sm_settings[ECSD_MAX_SYNC_MANAGER];
     struct ec_slave_sm sm[ECSD_MAX_SYNC_MANAGER];
-    ec_uint8_t data[ECSD_MAX_SYNC_MANAGER][1024];
+    ec_uint8_t data[ECSD_MAX_SYNC_MANAGER][256];
 };
 
 //! \brief Opens and initializes EtherCAT SubDev
 /*!
+ * The hardware access functions (ecsd_hw_read/write/enable_int, see
+ * hw.h) are provided by the application as strong symbols overriding
+ * the weak defaults in hw.c.
+ *
  * \param[in]   pecsd           Pointer to ECSD struture.
- * \param[in]   hw_hwl          Handle to hardware.
- * \param[in]   read_func       Pointer to hw read function.
- * \param[in]   write_func      Pointer to hw write function.
- * \param[in]   enable_int_func Pointer to hw enable interrupt function.
+ * \param[in]   hw_hdl          Handle to hardware (passed through to the hw hooks).
  * \param[in]   pdi_type        Type of PDI waiting for ECSD to become ready.
  *
  * \retval  OK on success.
  */
-ec_void_t ecsd_open(struct ecsd *pecsd, void *hw_hdl, ecsd_hw_read read_func,
-        ecsd_hw_write write_func, ecsd_hw_enable_int enable_int_func, ec_uint16_t pdi_type);
+ec_void_t ecsd_open(struct ecsd *pecsd, void *hw_hdl, ec_uint16_t pdi_type);
             
 //! \brief AL control indication
 /*!

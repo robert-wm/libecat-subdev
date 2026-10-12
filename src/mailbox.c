@@ -115,11 +115,11 @@ ec_retval_t ecsd_mailbox_read_upd_req(struct ecsd *pesc, struct ec_mailbox *mbx)
     }
 
     EC_MBX_HDR__CNT__SET(&mbx->mailbox_hdr, counter);
-    pesc->hw.write(pesc->hw.hdl, pesc->mbx.sm_send.address, (void *)mbx, min(pesc->mbx.sm_send.length, mbx->mailbox_hdr.length + 6));
+    ecsd_hw_write(pesc->hw.hdl, pesc->mbx.sm_send.address, (void *)mbx, min(pesc->mbx.sm_send.length, mbx->mailbox_hdr.length + 6));
 
     if ((mbx->mailbox_hdr.length + 6) < pesc->mbx.sm_send.length) {
         uint16_t dummy = 0;
-        pesc->hw.write(pesc->hw.hdl, pesc->mbx.sm_send.address + pesc->mbx.sm_send.length - 2, (void *)&dummy, 2u);
+        ecsd_hw_write(pesc->hw.hdl, pesc->mbx.sm_send.address + pesc->mbx.sm_send.length - 2, (void *)&dummy, 2u);
     }
 
     return 0;
