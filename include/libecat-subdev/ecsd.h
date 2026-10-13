@@ -125,7 +125,7 @@ struct ecsd {
 
     struct ecsd_sm_settings sm_settings[ECSD_MAX_SYNC_MANAGER];
     struct ec_slave_sm sm[ECSD_MAX_SYNC_MANAGER];
-    ec_uint8_t data[ECSD_MAX_SYNC_MANAGER][256];
+    ec_uint8_t data[ECSD_MAX_SYNC_MANAGER][512];
 };
 
 //! \brief Opens and initializes EtherCAT SubDev
