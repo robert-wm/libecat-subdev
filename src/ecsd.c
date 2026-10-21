@@ -1666,4 +1666,64 @@ ec_void_t ecsd_pdi(struct ecsd *pecsd) {
     }
 }
 
+ec_void_t ecsd_step(struct ecsd *pecsd) {
+    ec_uint32_t al_event;
+
+    // read al event-register from esc
+    ecsd_hw_read(pecsd->hw.hdl, EC_REG_AL_EVENT_REQUEST, (void *)&al_event, 2);
+
+    if (al_event & EC_REG_AL_EVENT_REQUEST__AL_CONTROL_EVENT__MASK) {
+        // Got AL Control event, check state transition request.
+        uint16_t al_control;
+        ecsd_hw_read(pecsd->hw.hdl, EC_REG_AL_CONTROL, (void *)&al_control, 2);
+
+        // reset al control event
+        al_event &= ~(EC_REG_AL_EVENT_REQUEST__AL_CONTROL_EVENT__MASK);
+
+        // handle state transition
+        ecsd_al_control_ind(pecsd, EC_REG_AL_CONTROL__STATE(al_control),
+                EC_REG_AL_CONTROL__ERROR_IND_ACK(al_control), EC_FALSE);
+    }
+
+    if (al_event & EC_REG_AL_EVENT_REQUEST__SM_ACTIVATION__MASK) {
+        // Got Sync Manager change.
+        ecsd_sm_chg(pecsd);
+        
+        // reset al control event
+        al_event &= ~(EC_REG_AL_EVENT_REQUEST__SM_ACTIVATION__MASK);
+    }
+    
+    if (pecsd->mbx_running == EC_TRUE) {
+        if (al_event & EC_REG_AL_EVENT_REQUEST__SM_INTERRUPT__SM_MASK(1)) {
+            // MainDevice has read send mailbox, acknowlegde and lock
+            uint8_t dummy[2];
+            ecsd_hw_write(pecsd->hw.hdl, pecsd->mbx.sm_send.address, &dummy[0], 2);
+
+            al_event &= ~(EC_REG_AL_EVENT_REQUEST__SM_INTERRUPT__SM_MASK(1));
+
+            ecsd_mailbox_read_upd_cnf(pecsd, EC_TRUE);
+        }
+
+        if (al_event & EC_REG_AL_EVENT_REQUEST__SM_INTERRUPT__SM_MASK(0)) {
+            al_event &= ~(EC_REG_AL_EVENT_REQUEST__SM_INTERRUPT__SM_MASK(0));
+
+            ecsd_hw_read(pecsd->hw.hdl, pecsd->mbx.sm_receive.address, &pecsd->mbx.sm_receive_buffer[0], pecsd->mbx.sm_receive.length);
+            ecsd_mailbox_write_ind(pecsd, (struct ec_mailbox *)&pecsd->mbx.sm_receive_buffer[0]);
+        }
+    }
+    
+    if (al_event & EC_REG_AL_EVENT_REQUEST__WATCHDOG_PD__MASK) {
+        uint16_t wd_status;
+        ecsd_hw_read(pecsd->hw.hdl, 0x440, (void *)&wd_status, 2);
+        ecsd_hw_write(pecsd->hw.hdl, 0x440, (void *)&wd_status, 2);
+    }
+
+    if ((pecsd->al_state == EC_STATE_OP) && (pecsd->dc_counter > 10) && (pecsd->outputs_update_running == EC_TRUE)) {
+        ecsd_stop_local_output_handler(pecsd);
+        ecsd_al_control_rsp(pecsd, EC_STATE_SAFEOP, EC_AL_STATUS_CODE__DC_SYNC_TIMEOUT_ERROR, EC_TRUE, EC_FALSE);
+
+        ecsd_output_update(pecsd);
+    }
+}
+
 

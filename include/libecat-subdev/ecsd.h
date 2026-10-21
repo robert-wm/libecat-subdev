@@ -57,6 +57,9 @@ struct mailbox {
 
     struct ecsd_foe foe;
 
+    /* Receive buffer for the mailbox SM(0) data (see ecsd_step). */
+    uint8_t sm_receive_buffer[ECSD_MAILBOX_READ__MAX_LENGTH];
+
     int counter;
 };
 
@@ -208,6 +211,20 @@ ec_void_t ecsd_sync0(struct ecsd *pecsd);
 ec_void_t ecsd_sync1(struct ecsd *pecsd);
 ec_void_t ecsd_pdo(struct ecsd *pecsd);
 ec_void_t ecsd_pdi(struct ecsd *pecsd);
+
+//! \brief Poll the AL event request register and dispatch the events.
+/*!
+ * Main-loop side of the AL event contract (the library sets the
+ * AL_EVENT_MASK on state transitions, this polls AL_EVENT_REQUEST):
+ * AL control (state transition), sync manager activation, mailbox
+ * read/write indication, process-data watchdog ack, and the DC sync
+ * timeout (OP state + no SYNC0 for > 10 cycles -> SAFEOP with
+ * DC_SYNC_TIMEOUT_ERROR, re-running the local output handler). Call
+ * once per main-loop iteration.
+ *
+ * \param[in]   pecsd        Pointer to ECSD struture.
+ */
+ec_void_t ecsd_step(struct ecsd *pecsd);
 
 ec_retval_t ecsd_stop_local_output_handler(struct ecsd *pecsd);
 
