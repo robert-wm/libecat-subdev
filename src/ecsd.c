@@ -1726,4 +1726,10 @@ ec_void_t ecsd_step(struct ecsd *pecsd) {
     }
 }
 
+// Periodic watchdog check. The application calls this once per 1 ms
+// from the main loop (see main.c). Not implemented yet.
+ec_void_t ecsd_check_watchdog(struct ecsd *pecsd) {
+    (void)pecsd;
+}
+
 

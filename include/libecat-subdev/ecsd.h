@@ -207,9 +207,46 @@ ec_retval_t ecsd_user_input_update(struct ecsd *pecsd);
  */
 ec_retval_t ecsd_user_output_update(struct ecsd *pecsd);
 
+//! \brief Distributed Clocks SYNC0 event handler.
+/*!
+ * In SAFEOP/OP the event marks dc_running. While the local PLL is
+ * still locking (wait_for_pll_running), the system time delta (0x92C)
+ * advances the pll_running counter and triggers
+ * ecsd_pll_running_event() once the target is reached.
+ *
+ * The DC sync timeout counter (checked by ecsd_step) is incremented,
+ * the local input handler is run, and the resulting input data is
+ * pushed to all read-direction sync managers.
+ *
+ * \param[in]   pecsd               Pointer to EtherCAT SubDevice structure.
+ */
 ec_void_t ecsd_sync0(struct ecsd *pecsd);
+
+//! \brief Distributed Clocks SYNC1 event handler (unused, no-op).
+/*!
+ * \param[in]   pecsd               Pointer to EtherCAT SubDevice structure.
+ */
 ec_void_t ecsd_sync1(struct ecsd *pecsd);
+
+//! \brief Process data event handler (unused, no-op).
+/*!
+ * \param[in]   pecsd               Pointer to EtherCAT SubDevice structure.
+ */
 ec_void_t ecsd_pdo(struct ecsd *pecsd);
+
+//! \brief PDI / sync manager output event handler.
+/*!
+ * Marks the device ready_for_op. If an output sync manager event is
+ * pending in the AL event request register, the new output data is
+ * read from all enabled output sync managers and the local output
+ * handler is run (ecsd_user_output_update). A second read of the AL
+ * event request register detects an overrun (another output event
+ * arrived while that ran); then 2 bytes from the start and 2 bytes
+ * from the end of each output sync manager region are read, discarding
+ * the stale frame data.
+ *
+ * \param[in]   pecsd               Pointer to EtherCAT SubDevice structure.
+ */
 ec_void_t ecsd_pdi(struct ecsd *pecsd);
 
 //! \brief Poll the AL event request register and dispatch the events.
@@ -226,6 +263,27 @@ ec_void_t ecsd_pdi(struct ecsd *pecsd);
  */
 ec_void_t ecsd_step(struct ecsd *pecsd);
 
+//! \brief Periodic watchdog check (1 ms).
+/*!
+ * Called by the application once per millisecond from the main loop
+ * (see main.c). Placeholder, not implemented yet.
+ *
+ * \param[in]   pecsd        Pointer to EtherCAT SubDevice structure.
+ */
+ec_void_t ecsd_check_watchdog(struct ecsd *pecsd);
+
+//! \brief Stop the local (PDI-driven) output update.
+/*!
+ * Clears the output sync manager (SM2) event bit from the AL event
+ * mask and marks the output update as no longer running. Called by
+ * the AL state machine when leaving states in which the local output
+ * handler is active (transitions back to INIT, PREOP, SAFEOP, ...).
+ * Not needed when the outputs are updated by DC SYNC0.
+ *
+ * \param[in]   pecsd               Pointer to EtherCAT SubDevice structure.
+ *
+ * \retval EC_OK    On success.
+ */
 ec_retval_t ecsd_stop_local_output_handler(struct ecsd *pecsd);
 
 #endif // LIBECAT_SUBDEV_ECSD_H
