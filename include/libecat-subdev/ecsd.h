@@ -113,6 +113,13 @@ struct ecsd {
                                                 // TRUE: watchdog behaviour is enabled
                                                 // FALSE: watchdog behaviour is disabled
                                                 // If slave has only inputs wdEnabled may always be FALSE
+    ec_uint32_t wd_counter;                     //!< \brief AL watchdog counter in 1 ms units. Incremented by
+                                                // ecsd_check_watchdog() (once per 1 ms tick) while in OP;
+                                                // reset by new process data from the master (ecsd_pdi) and
+                                                // while outside OP.
+    ec_uint32_t wd_limit;                       //!< \brief AL watchdog limit in 1 ms units. A value of 0
+                                                // disables the watchdog (matching the "watchdog time = 0"
+                                                // convention of wd_enabled).
     ec_bool_t ready_for_op;                     //!< \brief Internal variable which is set when the device is ready to be switched
                                                 // to OP in Non-DC-Mode, this should happen when the outputs have
                                                 // been received within the watchdog time if enabled or during SafeOp
@@ -266,7 +273,11 @@ ec_void_t ecsd_step(struct ecsd *pecsd);
 //! \brief Periodic watchdog check (1 ms).
 /*!
  * Called by the application once per millisecond from the main loop
- * (see main.c). Placeholder, not implemented yet.
+ * (board_hw_step). While in OP, wd_counter counts up in 1 ms units and
+ * is reset by new process data from the master (ecsd_pdi); when it
+ * reaches wd_limit (0 = disabled) the slave drops to SAFEOP with error
+ * and AL status code FATAL_SYNC_ERROR, mirroring the DC sync timeout
+ * handling in ecsd_step.
  *
  * \param[in]   pecsd        Pointer to EtherCAT SubDevice structure.
  */

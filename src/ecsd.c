@@ -660,6 +660,9 @@ ec_void_t ecsd_al_control_rsp(struct ecsd *pecsd, ec_uint8_t al_state,
     EC_REG_AL_STATUS__ERROR_IND__SET(al_status, al_error_flag);
     EC_REG_AL_STATUS__ID__SET(al_status, id_flag);
 
+    ec_log(100, __func__, "al_state %d, al_status_code 0x%X, al_error_flag %d, id_flag %d\n",
+        al_state, al_status_code, al_error_flag, id_flag);
+        
     if (al_error_flag == EC_TRUE) {
         ecsd_hw_write(pecsd->hw.hdl, EC_REG_AL_STATUS_CODE, (ec_uint8_t *)&al_status_code, sizeof(al_status_code));
     }
@@ -710,6 +713,7 @@ ec_void_t ecsd_pll_running_event(struct ecsd *pecsd) {
                 break;
             case EC_STATE_SAFEOP: {
                 pecsd->dc_counter = 0;
+                ec_log(100, __func__, "PLL running, switching to OP\n");
 
                 ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_read, ecsd_sm_mode_enable);
                 ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_write, ecsd_sm_mode_enable);
@@ -1091,6 +1095,8 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
 
                         pecsd->al_error_flag = EC_FALSE;
                         pecsd->al_status_code = 0u;
+                        pecsd->local_error_flag = EC_FALSE;
+                        pecsd->local_error_code = 0u;
 
                         // Re-enable the SM channels disabled by a local error (#34.1).
                         ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_read, ecsd_sm_mode_enable);
@@ -1118,7 +1124,9 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                             {
                                 // #26.2
                                 ec_log(100, __func__, "Transition #26.2, switching to OP.\n");
-
+                                
+                                pecsd->wd_limit = 10;
+                                pecsd->wd_counter = 0;
                                 pecsd->dc_counter = 0;
                                 pecsd->al_error_flag = EC_FALSE;
                                 pecsd->al_status_code = 0u;
@@ -1131,10 +1139,12 @@ ec_retval_t ecsd_al_control_ind(struct ecsd *pecsd, ec_uint8_t al_control_state,
                                 ecsd_id_info(pecsd, id_request);
                             } else if ((pecsd->dc_running == EC_TRUE) && (pecsd->pll_running == EC_FALSE)) {
                                 // #26.4
-                                ec_log(100, __func__, "Transition #26.4, switching to OP.\n");
+                                ec_log(100, __func__, "Transition #26.4, wait for PLL running, stay in SAFEOP.\n");
 
                                 ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_write, ecsd_sm_mode_enable);
 
+                                pecsd->wd_limit = 10;
+                                pecsd->wd_counter = 0;
                                 pecsd->dc_counter = 0;
                                 pecsd->wait_for_pll_running = EC_TRUE;
 
@@ -1419,6 +1429,8 @@ static ec_retval_t ecsd_al_state_change_req(struct ecsd *pecsd, ec_uint8_t al_st
             // #34.1 | #34.2 | #34.3 | #34.4 | #34.5
             if ((al_state == EC_STATE_SAFEOP) && (pecsd->al_error_flag == EC_TRUE) && (pecsd->local_error_flag == EC_FALSE)) {
                 // #34.1
+                ec_log(100, __func__, "Transition #34.1, ERROR, al status code 0x%X, stay in SAFEOP.\n", al_status_code);
+                
                 pecsd->id_flag = EC_FALSE;
                 ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_write, ecsd_sm_mode_disable);
                 pecsd->al_state = EC_STATE_SAFEOP;
@@ -1426,50 +1438,61 @@ static ec_retval_t ecsd_al_state_change_req(struct ecsd *pecsd, ec_uint8_t al_st
                 pecsd->local_error_flag = EC_TRUE;
                 pecsd->local_error_code = al_status_code;
 
-                ecsd_al_state_change_req(pecsd, pecsd->al_state, pecsd->al_status_code);
+                ecsd_al_control_rsp(pecsd, pecsd->al_state, pecsd->al_status_code, pecsd->al_error_flag, pecsd->id_flag);
             } else if ((al_state == EC_STATE_SAFEOP) && (pecsd->al_error_flag == EC_FALSE)) {
                 // #34.2
+                ec_log(100, __func__, "Transition #34.2, stay in SAFEOP.\n");
+                
                 ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_read, ecsd_sm_mode_enable);
                 pecsd->local_error_flag = EC_FALSE;
                 pecsd->local_error_code = 0u;
             } else if ((al_state == EC_STATE_PREOP) && (pecsd->al_error_flag == EC_TRUE)) {
                 // #34.3
+                ec_log(100, __func__, "Transition #34.3, ERROR, switch to PREOP.\n");
+                
                 pecsd->id_flag = EC_FALSE;
                 ecsd_stop_input_handler(pecsd);
                 pecsd->al_state = EC_STATE_PREOP;
                 pecsd->al_error_flag = EC_TRUE;
 
-                ecsd_al_state_change_req(pecsd, pecsd->al_state, pecsd->al_status_code);
+                ecsd_al_control_rsp(pecsd, pecsd->al_state, pecsd->al_status_code, pecsd->al_error_flag, pecsd->id_flag);
             } else if ((al_state == EC_STATE_INIT) && (pecsd->al_error_flag == EC_TRUE)) {
                 // #34.4
+                ec_log(100, __func__, "Transition #34.4, ERROR, switch to INIT.\n");
+                
                 pecsd->id_flag = EC_FALSE;
                 ecsd_stop_mbx_handler(pecsd);
                 ecsd_stop_input_handler(pecsd);
                 pecsd->al_state = EC_STATE_INIT;
                 pecsd->al_error_flag = EC_TRUE;
 
-                ecsd_al_state_change_req(pecsd, pecsd->al_state, pecsd->al_status_code);
+                ecsd_al_control_rsp(pecsd, pecsd->al_state, pecsd->al_status_code, pecsd->al_error_flag, pecsd->id_flag);
             } else if ((((al_state == EC_STATE_INIT) || (al_state == EC_STATE_PREOP)) && (pecsd->al_error_flag == EC_FALSE)) ||
                     (   (pecsd->al_control_state != EC_STATE_INIT) && 
                         (pecsd->al_control_state != EC_STATE_PREOP) && 
                         (pecsd->al_control_state != EC_STATE_SAFEOP) ))
             {
                 // #34.5
+                ec_log(100, __func__, "Transition #34.5, NOP.\n");
             }
             break;
         case EC_STATE_OP:
             // #47.1 | #47.2 | #47.3 | #47.4
             if ((al_state == EC_STATE_SAFEOP) && (pecsd->al_error_flag == EC_TRUE)) {
                 // #47.1
+                ec_log(100, __func__, "Transition #47.1, ERROR, al status code 0x%X, switch to SAFEOP.\n", al_status_code);
+                
                 ecsd_stop_local_output_handler(pecsd);
                 ecsd_configure_sm_channels_pd(pecsd, ecsd_sm_direction_write, ecsd_sm_mode_disable);
                 pecsd->al_state = EC_STATE_SAFEOP;
                 pecsd->local_error_flag = EC_TRUE;
                 pecsd->local_error_code = al_status_code;
 
-                ecsd_al_state_change_req(pecsd, pecsd->al_state, pecsd->al_status_code);
+                ecsd_al_control_rsp(pecsd, pecsd->al_state, pecsd->al_status_code, pecsd->al_error_flag, pecsd->id_flag);
             } else if ((al_state == EC_STATE_PREOP) && (pecsd->al_error_flag == EC_TRUE)) {
                 // #47.2
+                ec_log(100, __func__, "Transition #47.2, ERROR, al status code 0x%X, stay in PREOP.\n", al_status_code);
+                
                 pecsd->id_flag = EC_FALSE;
                 ecsd_stop_input_handler(pecsd);
                 ecsd_stop_local_output_handler(pecsd);
@@ -1477,9 +1500,11 @@ static ec_retval_t ecsd_al_state_change_req(struct ecsd *pecsd, ec_uint8_t al_st
                 pecsd->local_error_flag = EC_TRUE;
                 pecsd->local_error_code = al_status_code;
 
-                ecsd_al_state_change_req(pecsd, pecsd->al_state, pecsd->al_status_code);
+                ecsd_al_control_rsp(pecsd, pecsd->al_state, pecsd->al_status_code, pecsd->al_error_flag, pecsd->id_flag);
             } else if ((al_state == EC_STATE_INIT) && (pecsd->al_error_flag == EC_TRUE)) {
                 // #47.3
+                ec_log(100, __func__, "Transition #47.3, ERROR, al status code 0x%X, stay in INIT.\n", al_status_code);
+                
                 pecsd->id_flag = EC_FALSE;
                 ecsd_stop_mbx_handler(pecsd);
                 ecsd_stop_input_handler(pecsd);
@@ -1488,7 +1513,7 @@ static ec_retval_t ecsd_al_state_change_req(struct ecsd *pecsd, ec_uint8_t al_st
                 pecsd->local_error_flag = EC_TRUE;
                 pecsd->local_error_code = al_status_code;
 
-                ecsd_al_state_change_req(pecsd, pecsd->al_state, pecsd->al_status_code);
+                ecsd_al_control_rsp(pecsd, pecsd->al_state, pecsd->al_status_code, pecsd->al_error_flag, pecsd->id_flag);
             } else if ((((al_state == EC_STATE_SAFEOP) || (al_state == EC_STATE_PREOP) || (al_state == EC_STATE_INIT)) && (pecsd->al_error_flag == EC_FALSE)) ||
                     (   (pecsd->al_control_state != EC_STATE_INIT) && 
                         (pecsd->al_control_state != EC_STATE_PREOP) && 
@@ -1496,19 +1521,23 @@ static ec_retval_t ecsd_al_state_change_req(struct ecsd *pecsd, ec_uint8_t al_st
                         (pecsd->al_control_state != EC_STATE_OP))) 
             {
                 // #47.4
+                ec_log(100, __func__, "Transition #47.4, NOP.\n");
             }
             break;
         case EC_STATE_BOOT:
             // #57 | #58
             if ((al_state == EC_STATE_INIT) && (pecsd->al_error_flag == EC_TRUE)) {
                 // #57
+                ec_log(100, __func__, "Transition #57, switch to INIT.\n");
+                
                 ecsd_stop_mbx_handler(pecsd);
                 pecsd->al_state = EC_STATE_INIT;
                 pecsd->al_error_flag = EC_TRUE;
 
-                ecsd_al_state_change_req(pecsd, pecsd->al_state, pecsd->al_status_code);
+                ecsd_al_control_rsp(pecsd, pecsd->al_state, pecsd->al_status_code, pecsd->al_error_flag, pecsd->id_flag);
             } else if (pecsd->al_error_flag == EC_FALSE) {
                 // #58
+                ec_log(100, __func__, "Transition #58, NOP.\n");
             }
             break;
         default:
@@ -1594,6 +1623,7 @@ ec_void_t ecsd_sync0(struct ecsd *pecsd) {
         }
     }
 
+    pecsd->wd_counter++;
     pecsd->dc_counter++;
 
     // Write initial input data 
@@ -1636,18 +1666,21 @@ ec_void_t ecsd_pdi(struct ecsd *pecsd) {
     // read al event-register from esc
     ecsd_hw_read(pecsd->hw.hdl, EC_REG_AL_EVENT_REQUEST, (void *)&al_event, 4);
     if (al_event & output_sm_events) {
-        // output event: read new output data from the esc
-        pecsd->dc_counter = 0;
-        pecsd->outputs_update_running = EC_TRUE;
+        if (pecsd->al_state = EC_STATE_OP) {
+            // output event: read new output data from the esc
+            pecsd->dc_counter = 0;
+            pecsd->wd_counter = 0;   // new process data: feed the AL watchdog
+            pecsd->outputs_update_running = EC_TRUE;
 
-        for (sm_idx = sm_first; sm_idx < ECSD_MAX_SYNC_MANAGER; ++sm_idx) {
-            if (((pecsd->sm[sm_idx].activate & EC_REG_SYNC_MANAGER__ACTIVATE__ENABLE_SM) != 0u) &&
-                ((pecsd->sm[sm_idx].control & EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_MASK) == EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_WRITE))
-            {
-                ecsd_hw_read(pecsd->hw.hdl, pecsd->sm[sm_idx].address, &pecsd->data[sm_idx][0], pecsd->sm[sm_idx].length);
+            for (sm_idx = sm_first; sm_idx < ECSD_MAX_SYNC_MANAGER; ++sm_idx) {
+                if (((pecsd->sm[sm_idx].activate & EC_REG_SYNC_MANAGER__ACTIVATE__ENABLE_SM) != 0u) &&
+                    ((pecsd->sm[sm_idx].control & EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_MASK) == EC_REG_SYNC_MANAGER__CONTROL__DIRECTION_WRITE))
+                {
+                    ecsd_hw_read(pecsd->hw.hdl, pecsd->sm[sm_idx].address, &pecsd->data[sm_idx][0], pecsd->sm[sm_idx].length);
+                }
             }
+            ecsd_output_update(pecsd);
         }
-        ecsd_output_update(pecsd);
     }
 
     // Overrun check
@@ -1727,9 +1760,31 @@ ec_void_t ecsd_step(struct ecsd *pecsd) {
 }
 
 // Periodic watchdog check. The application calls this once per 1 ms
-// from the main loop (see main.c). Not implemented yet.
+// from the main loop (board_hw_step). While in OP, wd_counter counts
+// up in 1 ms units; when it reaches wd_limit (0 = disabled) the slave
+// drops to SAFEOP with error and AL status code FATAL_SYNC_ERROR,
+// mirroring the DC sync timeout handling in ecsd_step. New process
+// data from the master (ecsd_pdi) resets the counter.
 ec_void_t ecsd_check_watchdog(struct ecsd *pecsd) {
-    (void)pecsd;
+    if (pecsd->outputs_update_running == EC_FALSE) {
+        // No process data outputs 
+        pecsd->wd_counter = 0u;
+        return;
+    }
+
+    if (pecsd->wd_limit == 0u) {
+        return; // watchdog disabled
+    }
+
+    if (pecsd->wd_counter >= pecsd->wd_limit) {
+        ec_log(100, __func__, "watchdog expired, got counter %d, limit %d\n", pecsd->wd_counter, pecsd->wd_limit);
+        
+        // Watchdog expired: no process data within wd_limit.
+        pecsd->al_error_flag = EC_TRUE;
+        ecsd_al_state_change_req(pecsd, EC_STATE_SAFEOP, EC_AL_STATUS_CODE__FATAL_SYNC_ERROR);
+    
+        pecsd->wd_counter = 0u;
+    }
 }
 
 
