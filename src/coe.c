@@ -240,6 +240,7 @@ ec_retval_t ecsd_coe_sdo_download_normal_ind(struct ecsd *pecsd, struct ec_coe_s
 ec_retval_t ecsd_coe_download_sdo_segment_ind(struct ecsd *pecsd, struct ec_coe_sdo_download_segmented_req *mbx) {
     assert(pecsd != NULL);
     ec_retval_t ret = EC_OK;
+    (void)mbx;
     return ret;
 }
 
@@ -517,7 +518,7 @@ ec_retval_t ecsd_coe_sdo_info_service_odlist_ind(struct ecsd *pecsd, struct ec_c
         }
     } else {
         // start sending odlist
-        int obj_cnt = object_cnt(1);
+        unsigned int obj_cnt = object_cnt(1);
         size_t data_size = pecsd->mbx.sm_send.length - 6 - 6 - 2;
 
         if (obj_cnt > (data_size / 2)) {
